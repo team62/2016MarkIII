@@ -32,7 +32,7 @@ task flywheelVelocity(){
 int getFlywheelVelocity(){
 	int sum=0;
 	for(int i=0;i<5;i++)
-		sum = sum + velocities;
+		sum = sum + velocities[i];
 	return sum/5;
 }
 
