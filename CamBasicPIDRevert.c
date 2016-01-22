@@ -53,8 +53,8 @@ int getFlywheelVelocity(){
 
 task flywheelControl(){
 	clearDebugStream();
-	float kP=0.68;
-	float kI=0.057;
+	float kP=3.1;
+	float kI=0.075;
 	int limit = 15;
 	while(true){
 
