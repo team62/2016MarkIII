@@ -16,7 +16,7 @@ bool lastUpButton=false;
 bool lastDownButton=false;
 bool currentUpButton;
 bool currentDownButton;
-int currentGoalVelocity=175;
+int currentGoalVelocity=175;//175 for long
 int currentVelocity;
 
 float error=0;
@@ -53,7 +53,7 @@ int getFlywheelVelocity(){
 
 task flywheelControl(){
 	clearDebugStream();
-	float kP=1.2;
+	float kP=0.68;
 	float kI=0.057;
 	int limit = 15;
 	while(true){
@@ -78,7 +78,7 @@ task flywheelControl(){
 			//integral=0;
 		}
 		writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
-		delay(80);
+		delay(45);
 	}
 }
 int motortestspeed = 70;
@@ -111,14 +111,14 @@ task main()
 	motor[rightWheel13] = vexRT(Ch2);
 	motor[rightWheel2] = vexRT(Ch2);
 
-		motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
-		motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
+		//motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
+		//motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 
 		if(vexRT(Btn8D))
 			stopAllTasks();
 
-		//motor[Intake] = 127;
-		//motor[Indexer] = 127;
+		motor[Intake] = 127;
+		motor[Indexer] = 127;
 		delay(50);
 	}
 
