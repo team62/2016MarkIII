@@ -1,3 +1,4 @@
+
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           flywheel1,     tmotorVex393HighSpeed_HBridge, openLoop, encoderPort, I2C_1)
@@ -12,7 +13,7 @@ bool lastUpButton=false;
 bool lastDownButton=false;
 bool currentUpButton;
 bool currentDownButton;
-int currentGoalVelocity=103;
+int currentGoalVelocity=104;
 int currentVelocity;
 
 float error=0;
@@ -38,16 +39,18 @@ int getFlywheelVelocity(){
 
 task flywheelControl(){
 	clearDebugStream();
-	float kP=3.1;
-	float kI=0.057;
+	float kP=3.0;
+	float kI=0.057/*57*/;
 	int limit = 30;
 	while(true){
 
-		currentVelocity = getFlywheelVelocity();//might need work
+		currentVelocity = getMotorVelocity(flywheel1);//might need work
 		error = currentGoalVelocity - currentVelocity;
 		integral = integral + error;
+		/*
 		if(integral>(100/kI))
 			integral = 100/kI;
+			*/
 		output = error*kP + integral*kI;
 		if(output >15){
 			if(output>motor[flywheel1]+limit){
@@ -60,7 +63,7 @@ task flywheelControl(){
 			}
 			}else if(output<0){
 			motor[flywheel1]=0;
-			integral=0;
+			//integral=0;
 		}
 		writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d", motor[flywheel1], error, error*kP, integral*kI);
 		delay(50);
@@ -72,7 +75,7 @@ task main()
 	slaveMotor(flywheel2,flywheel1);
 	slaveMotor(flywheel3,flywheel1);
 	slaveMotor(flywheel4,flywheel1);
-	startTask(flywheelVelocity);
+	//startTask(flywheelVelocity);
 	startTask(flywheelControl);
 
 
@@ -89,14 +92,15 @@ task main()
 			currentGoalVelocity-=2;
 
 
-		/*
+
 		motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 		motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
-		*/
+
+		/*
 		motor[Intake] = 127;
 		motor[Indexer] = 127;
 		delay(50);
-
+		*/
 	}
 
 }
