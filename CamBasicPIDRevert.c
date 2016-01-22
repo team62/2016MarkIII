@@ -53,13 +53,9 @@ int getFlywheelVelocity(){
 
 task flywheelControl(){
 	clearDebugStream();
-<<<<<<< HEAD
-	float kP=3.1;
-	float kI=0.075;
-=======
-	float kP=1.2;
-	float kI=0.057;
->>>>>>> parent of 5b93229... revert works well
+
+	float kP=1.1;
+	float kI=0.05736;
 	int limit = 15;
 	while(true){
 
@@ -116,7 +112,7 @@ task main()
 	motor[rightWheel13] = vexRT(Ch2);
 	motor[rightWheel2] = vexRT(Ch2);
 
-		motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
+		//motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 		motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 
 		if(vexRT(Btn8D))
