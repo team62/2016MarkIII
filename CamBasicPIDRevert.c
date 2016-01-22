@@ -16,7 +16,7 @@ bool lastUpButton=false;
 bool lastDownButton=false;
 bool currentUpButton;
 bool currentDownButton;
-int currentGoalVelocity=175;//175 for long
+int currentGoalVelocity=175;
 int currentVelocity;
 
 float error=0;
@@ -53,8 +53,13 @@ int getFlywheelVelocity(){
 
 task flywheelControl(){
 	clearDebugStream();
+<<<<<<< HEAD
 	float kP=3.1;
 	float kI=0.075;
+=======
+	float kP=1.2;
+	float kI=0.057;
+>>>>>>> parent of 5b93229... revert works well
 	int limit = 15;
 	while(true){
 
@@ -78,7 +83,7 @@ task flywheelControl(){
 			//integral=0;
 		}
 		writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
-		delay(45);
+		delay(80);
 	}
 }
 int motortestspeed = 70;
@@ -111,14 +116,14 @@ task main()
 	motor[rightWheel13] = vexRT(Ch2);
 	motor[rightWheel2] = vexRT(Ch2);
 
-		//motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
-		//motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
+		motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
+		motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 
 		if(vexRT(Btn8D))
 			stopAllTasks();
 
-		motor[Intake] = 127;
-		motor[Indexer] = 127;
+		//motor[Intake] = 127;
+		//motor[Indexer] = 127;
 		delay(50);
 	}
 
