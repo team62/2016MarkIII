@@ -52,26 +52,36 @@
 bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 
-enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+//Stores the differient speeds for the velocity states of the robot
+enum { VELOCITY_LONG = 172, VELOCITY_PIPE = 130, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
+//Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
 void setLeftWheelSpeed ( int speed = 127 ) {
 	motor[leftWheel13] = speed;
 	motor[leftWheel2] = speed;
 }
 
+//Sets the speed of the wheels on the right side of the robot
 #warning "setRightWheelSpeed"
 void setRightWheelSpeed ( int speed = 127 ) {
 	motor[rightWheel13] = speed;
 	motor[rightWheel2] = speed;
 }
 
+//Sets both sides of hte drivebase to differient speeds
 #warning "setWheelSpeed"
 void setWheelSpeed ( int leftWheelSpeed = 127, int rightWheelSpeed = 127 ) {
 	setLeftWheelSpeed(leftWheelSpeed);
 	setRightWheelSpeed(rightWheelSpeed);
 }
 
+//Overloaded - sets both sides of the drivebase to the same speed
+void setWheelSpeed ( int wheelSpeed = 127 ) {
+	setWheelSpeed(wheelSpeed,wheelSpeed);
+}
+
+//Logarithmic drivebase control
 #warning "logDrive"
 void logDrive () {
 	int rawLeft, rawRight, outLeft, outRight;
@@ -89,6 +99,14 @@ void logDrive () {
 	setWheelSpeed(outLeft,outRight);
 }
 
+//Tank drive control for drivebase
+#warning "tankDrive"
+void tankDrive () {
+	int deadbands = 10;
+	setWheelSpeed(vexRT(Ch3)<deadbands?0:vexRT(Ch3),vexRT(Ch2)<deadbands?0:vexRT(Ch2));
+}
+
+//Instance variables for flywheel control
 bool lastUpButton=false;
 bool lastDownButton=false;
 bool currentUpButton;
@@ -96,10 +114,15 @@ bool currentDownButton;
 int currentGoalVelocity=VELOCITY_LONG;
 int currentVelocity;
 
+//Flywheel PID instance variables
 float error=0;
 float integral=0;
 int output;
 int velocities[5];
+
+//Populates an array with the most recent velocities of the flywheel,
+//used to calculate flywheel velocity
+//TODO consider revising after 23/1/16
 #warning "flywheelVelocity"
 task flywheelVelocity(){
 	int nextIndex=0;
@@ -112,6 +135,8 @@ task flywheelVelocity(){
 	}
 }
 
+//Returns the velocity of the flywheel
+//TODO consider revising after 23/1/16
 #warning "getFlywheelVelocity"
 int getFlywheelVelocity(){
 	int sum=0;
@@ -121,6 +146,7 @@ int getFlywheelVelocity(){
 }
 
 bool flywheelOn = false;
+//Controls the flywheel using PID
 #warning "flywheelControl"
 task flywheelControl(){
 	flywheelOn = true;
@@ -156,15 +182,16 @@ task flywheelControl(){
 }
 
 bool flywheelHold = false;
+//Starts the flywheel at a target velocity
 #warning "startFlywheel"
 void startFlywheel (int targetVelocity) {
 	currentGoalVelocity = targetVelocity;
-	if(targetVelocity == (int) VELOCITY_HOLD) {
-		motor[flywheel4] = VELOCITY_HOLD;
+	if(targetVelocity == (int) VELOCITY_HOLD) {	//If we are holding the motors,
+		motor[flywheel4] = VELOCITY_HOLD;					//we don't want to startup the PID
 		stopTask(flywheelVelocity);
 		stopTask(flywheelControl);
 		flywheelHold = true;
-	} else if(!flywheelOn || flywheelHold) {
+	} else if(!flywheelOn || flywheelHold) {		//Otherwise, we can
 		startTask(flywheelVelocity);
 		startTask(flywheelControl);
 		flywheelHold = false;
@@ -172,11 +199,14 @@ void startFlywheel (int targetVelocity) {
 }
 
 bool autoIntake = false;
+//Starts the flywheel for regular shots
+#warning "startAutoFlywheel"
 void startAutoFlywheel (int targetVelocity) {
-	startFlywheel(targetVelocity);
+	startFlywheel(targetVelocity);							//NEEDS TESTING
 	autoIntake = false;
 }
 
+//Slows the flywheel down without breaking the motors
 #warning "stopFlywheel"
 task stopFlywheel () {
 	flywheelOn = false;
@@ -190,8 +220,9 @@ task stopFlywheel () {
 	stopTask(stopFlywheel);
 }
 
-#warning "autoLoad"
-void autoLoad () {
+//Revs flywheel for manual loaded balls
+#warning "startManualFlywheel"
+void startManualFlywheel () {
 	startFlywheel(VELOCITY_LONG);
 	autoIntake = true;
 }
@@ -199,6 +230,7 @@ void autoLoad () {
 int ballIndexerLimit = 2000;
 int velocityTime = 400;
 int velocityLimit = 23;
+//controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
@@ -234,6 +266,7 @@ task intakeControl () {
 		//}
 }
 
+//Tests the tempermental encoder for issues before executing main code
 #warning "testEncoder"
 void testEncoder () {
 	int recordedEncoderValue1, recordedEncoderValue2;
@@ -257,6 +290,7 @@ void testEncoder () {
 	startTask(stopFlywheel);
 }
 
+//Initialises driver control code
 #warning "init"
 void init() {
 	slaveMotor(flywheel2,flywheel4);
@@ -301,7 +335,7 @@ task usercontrol() {
 			startTask(stopFlywheel);
 
 		else if(vexRT(Btn7D))
-			autoLoad();
+			startManualFlywheel();
 
 		if(currentUpButton && !lastUpButton)
 			currentGoalVelocity+=2;
