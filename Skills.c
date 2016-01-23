@@ -22,7 +22,9 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-typedef enum { VELOCITY_LONG = 175, VELOCITY_MID = 155, VELOCITY_PIPE = 130 } flywheelVelocities;
+typedef enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 } flywheelVelocities;
+
+bool tuneMode = false; //ONLY TRUE FOR PID TUNING
 
 #warning "setLeftWheelSpeed"
 void setLeftWheelSpeed ( int speed = 127 ) {
@@ -44,10 +46,19 @@ void setWheelSpeed ( int leftWheelSpeed = 127, int rightWheelSpeed = 127 ) {
 
 #warning "logDrive"
 void logDrive () {
-	int rawLeft = vexRT(Ch3);
-	int rawRight = vexRT(Ch2);
+	int rawLeft, rawRight, outLeft, outRight;
+	rawLeft = vexRT(Ch3);
+	rawRight = vexRT(Ch2);
 
-	setWheelSpeed(rawLeft*rawLeft/127,rawRight*rawRight/127);
+	outLeft = rawLeft*rawLeft/127;
+	outRight = rawRight*rawRight/127;
+
+	if(rawLeft<0)
+		outLeft*=-1;
+	if(rawRight<0)
+		outRight*=-1;
+
+	setWheelSpeed(outLeft,outRight);
 }
 
 bool lastUpButton=false;
@@ -81,11 +92,13 @@ int getFlywheelVelocity(){
 	return sum/5;
 }
 
+bool flywheelOn = false;
 #warning "flywheelControl"
 task flywheelControl(){
+	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=1.1;
+	float kP=1.0;
 	float kI=0.05736;
 	int limit = 15;
 	while(true){
@@ -99,13 +112,12 @@ task flywheelControl(){
 		if(output >25){
 			if(output>motor[flywheel4]+limit){
 				motor[flywheel4]=motor[flywheel4]+limit;
-				}else if(output<motor[flywheel4]-limit){
+			}else if(output<motor[flywheel4]-limit){
 				motor[flywheel4]=motor[flywheel4]-limit;
-				}else{
-
+			}else{
 				motor[flywheel4]=output;
 			}
-			}else if(output<0){
+		}else if(output<0){
 			motor[flywheel4]=0;
 			//integral=0;
 		}
@@ -114,13 +126,91 @@ task flywheelControl(){
 	}
 }
 
+bool flywheelHold = false;
+#warning "startFlywheel"
+void startFlywheel (int targetVelocity) {
+	currentGoalVelocity = targetVelocity;
+	if(targetVelocity == VELOCITY_HOLD) {
+		motor[flywheel4] = VELOCITY_HOLD;
+		stopTask(flywheelVelocity);
+		stopTask(flywheelControl);
+		flywheelHold = true;
+	} else if(!flywheelOn || flywheelHold) {
+		startTask(flywheelVelocity);
+		startTask(flywheelControl);
+		flywheelHold = false;
+	}
+}
+
+bool autoIntake = false;
+void startAutoFlywheel (int targetVelocity) {
+	startFlywheel(targetVelocity);
+	autoIntake = false;
+}
+
+#warning "stopFlywheel"
+task stopFlywheel () {
+	flywheelOn = false;
+	autoIntake = false;
+	stopTask(flywheelControl);
+	while(motor[flywheel4]>0){
+		motor[flywheel4] -= 1;
+		delay(20);
+	}
+	stopTask(flywheelVelocity);
+	stopTask(stopFlywheel);
+}
+
+#warning "autoLoad"
+void autoLoad () {
+	startFlywheel(VELOCITY_LONG);
+	autoIntake = true;
+}
+
+int ballIndexerLimit = 2000;
+int velocityTime = 400;
+int velocityLimit = 23;
+#warning "intakeControl"
+task intakeControl () {
+	while(true) {
+		motor[Intake]=(tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+
+		if(vexRT(Btn5U)||tuneMode) {
+			if(SensorValue[indexHigh]>ballIndexerLimit) {
+					motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+			} else if (time1[T1]>velocityTime && (vexRT(Btn6U) || tuneMode) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
+					motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+					delay(90);
+					clearTimer(T1);
+			} else {
+					motor[indexer] = 0;
+			}
+		} else if(vexRT(Btn5D)) {
+				motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+		} else {
+				motor[indexer] = 0;
+	}
+	}
+		//if(SensorValue[indexHigh]>=ballIndexerLimit && (vexRT(Btn5U) || tuneMode)) {
+		//	motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+		//} else if(!vexRT(Btn5D) && time1[T1]<velocityTime && /*abs(currentGoalVelocity-currentVelocity)>velocityLimit &&*/ SensorValue[indexHigh]<ballIndexerLimit) {
+		//	motor[indexer] = 0;
+		//} else if((vexRT(Btn5U) && vexRT(Btn6U)) || tuneMode || autoIntake || vexRT(Btn5D)) {
+		//	motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
+		//	if(time1[T1]>velocityTime+150) {
+		//		clearTimer(T1);
+		//	}
+  //  } else {
+		//	motor[indexer] = 0;
+		//}
+}
+
 #warning "init"
 void init() {
 	slaveMotor(flywheel2,flywheel4);
 	slaveMotor(flywheel3,flywheel4);
 	slaveMotor(flywheel1,flywheel4);
-	startTask(flywheelVelocity);
-	startTask(flywheelControl);
+	startTask(intakeControl);
 }
 
 void pre_auton() {
@@ -140,15 +230,25 @@ task usercontrol() {
 		currentUpButton = vexRT[Btn5U];
 		currentDownButton = vexRT[Btn5D];
 
+		if(vexRT(Btn8R))
+			startAutoFlywheel(VELOCITY_PIPE);
+
+		else if(vexRT(Btn8D))
+			startAutoFlywheel(VELOCITY_HOLD);
+
+		else if(vexRT(Btn8L))
+			startAutoFlywheel(VELOCITY_LONG);
+
+		else if(vexRT(Btn8U))
+			startTask(stopFlywheel);
+
+		else if(vexRT(Btn7D))
+			autoLoad();
+
 		if(currentUpButton && !lastUpButton)
 			currentGoalVelocity+=2;
 		if(currentDownButton && !lastDownButton)
 			currentGoalVelocity-=2;
-
-		//TODO needs calib for sensor high
-		//TODO comment everything
-		motor[Intake]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
-		motor[Indexer]=(vexRt[Btn6U]-vexRt[Btn6D])*127;
 
 		logDrive();
 	}
