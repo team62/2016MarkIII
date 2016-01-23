@@ -43,10 +43,10 @@
 *////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
-/// JUMPER CABLE CONFIGURATIONS																		///
-///	dgtl10 = tune mode (acts like you're holding down 5U and 6U)	///
-///	dgtl11 = debug mode (logs flywheel info to debug stream)			///
-///	dgtl12 = encoder test mode (checks encoder works at runtime)	///
+/// JUMPER CABLE CONFIGURATIONS                                   ///
+///	dgtl10 = tune mode (acts like you're holding down 5U and 6U)  ///
+///	dgtl11 = debug mode (logs flywheel info to debug stream)      ///
+///	dgtl12 = encoder test mode (checks encoder works at runtime)  ///
 /////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
 bool tuneMode = false; //acts like you're holding 5U and 6U
