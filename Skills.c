@@ -51,6 +51,7 @@
 //DEBUG VARIABLES
 bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
+bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 172, VELOCITY_PIPE = 130, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
@@ -297,8 +298,14 @@ void init() {
 	slaveMotor(flywheel3,flywheel4);
 	slaveMotor(flywheel1,flywheel4);
 	startTask(intakeControl);
-	debugMode = (bool) SensorValue[debug];
-	tuneMode = (bool) SensorValue[tune];
+	if(!debugMode)
+		debugMode = (bool) SensorValue[debug];
+
+	if(!tuneMode)
+		tuneMode = (bool) SensorValue[tune];
+
+	if(!encoderTestMode)
+		encoderTestMode = (bool) SensorValue[encoderTest];
 }
 
 void pre_auton() {
@@ -311,7 +318,7 @@ task autonomous() {
 
 task usercontrol() {
 
-	if(SensorValue[encoderTest])
+	if(encoderTestMode)
 		testEncoder();
 
 	init();
