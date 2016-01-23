@@ -1,6 +1,8 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in8,    indexHigh,      sensorLineFollower)
 #pragma config(Sensor, dgtl1,  encoderError,   sensorLEDtoVCC)
+#pragma config(Sensor, dgtl10, tune,           sensorNone)
+#pragma config(Sensor, dgtl11, debug,          sensorTouch)
 #pragma config(Sensor, dgtl12, encoderTest,    sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           rightWheel2,   tmotorVex393TurboSpeed_HBridge, openLoop, reversed)
@@ -40,11 +42,17 @@
 ///// Since: Jan. 22, 2016                              /////
 *////////////////////////////////////////////////////////////
 
-enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
-
+/////////////////////////////////////////////////////////////////////
+/// JUMPER CABLE CONFIGURATIONS																		///
+///	dgtl10 = tune mode (acts like you're holding down 5U and 6U)	///
+///	dgtl11 = debug mode (logs flywheel info to debug stream)			///
+///	dgtl12 = encoder test mode (checks encoder works at runtime)	///
+/////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
 bool tuneMode = false; //acts like you're holding 5U and 6U
-bool debug = false; //prints to console
+bool debugMode = false; //prints to console
+
+enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
 #warning "setLeftWheelSpeed"
 void setLeftWheelSpeed ( int speed = 127 ) {
@@ -141,7 +149,7 @@ task flywheelControl(){
 			motor[flywheel4]=0;
 			//integral=0;
 		}
-		if(debug)
+		if(debugMode)
 			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
 		delay(80);
 	}
@@ -255,6 +263,8 @@ void init() {
 	slaveMotor(flywheel3,flywheel4);
 	slaveMotor(flywheel1,flywheel4);
 	startTask(intakeControl);
+	debugMode = (bool) SensorValue[debug];
+	tuneMode = (bool) SensorValue[tune];
 }
 
 void pre_auton() {
