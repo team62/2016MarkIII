@@ -287,7 +287,12 @@ void testEncoder () {
 	if(performsWell)
 		SensorValue[encoderError] = 1;
 	else
-		SensorValue[encoderError] = 0;
+		while(true) {
+			SensorValue[encoderError] = 0;
+			delay(100);
+			sensorValue[encoderError] = 1;
+			delay(100);
+		}
 	startTask(stopFlywheel);
 }
 
@@ -318,10 +323,10 @@ task autonomous() {
 
 task usercontrol() {
 
+	init();
+
 	if(encoderTestMode)
 		testEncoder();
-
-	init();
 
 	while (true) {
 		lastUpButton=currentUpButton;
