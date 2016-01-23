@@ -1,7 +1,6 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in8,    indexHigh,      sensorLineFollower)
 #pragma config(Sensor, dgtl1,  encoderError,   sensorLEDtoVCC)
-#pragma config(Sensor, dgtl12, encoderTest,    sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           rightWheel2,   tmotorVex393TurboSpeed_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           flywheel4,     tmotorVex393TurboSpeed_MC29, openLoop, reversed, encoderPort, I2C_1)
@@ -19,32 +18,14 @@
 
 //Competition Control and Duration Settings
 #pragma competitionControl(Competition)
-#pragma autonomousDuration(0)
-#pragma userControlDuration(60)
+#pragma autonomousDuration(60)
+#pragma userControlDuration(0)
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-/*///////////////////////////////////////////////////////////
-/////____________/\\\\\____/\\\\\\\\\_____              /////
-///// ________/\\\\////___/\\\///////\\\___             /////
-/////  _____/\\\///_______\///______\//\\\__            /////
-/////   ___/\\\\\\\\\\\______________/\\\/___           /////
-/////    __/\\\\///////\\\_________/\\\//_____          /////
-/////     _\/\\\______\//\\\_____/\\\//________         /////
-/////      _\//\\\______/\\\____/\\\/___________        /////
-/////       __\///\\\\\\\\\/____/\\\\\\\\\\\\\\\_       /////
-/////        ____\/////////_____\///////////////__      /////
-///// Mark III Robot                                    /////
-///// Driver Skills Code                              	/////
-///// Authors: Jonathan Damico (jj_damico@yahoo.com)    /////
-///// Since: Jan. 22, 2016                              /////
-*////////////////////////////////////////////////////////////
-
 enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
-//DEBUG VARIABLES
-bool tuneMode = false; //acts like you're holding 5U and 6U
-bool debug = false; //prints to console
+bool tuneMode = false; //ONLY TRUE FOR PID TUNING
 
 #warning "setLeftWheelSpeed"
 void setLeftWheelSpeed ( int speed = 127 ) {
@@ -62,6 +43,10 @@ void setRightWheelSpeed ( int speed = 127 ) {
 void setWheelSpeed ( int leftWheelSpeed = 127, int rightWheelSpeed = 127 ) {
 	setLeftWheelSpeed(leftWheelSpeed);
 	setRightWheelSpeed(rightWheelSpeed);
+}
+
+void setWheelSpeed ( int wheelSpeed = 127 ) {
+	setWheelSpeed(wheelSpeed,wheelSpeed);
 }
 
 #warning "logDrive"
@@ -141,8 +126,7 @@ task flywheelControl(){
 			motor[flywheel4]=0;
 			//integral=0;
 		}
-		if(debug)
-			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
+		writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
 		delay(80);
 	}
 }
@@ -226,23 +210,11 @@ task intakeControl () {
 		//}
 }
 
-#warning "testEncoder"
 void testEncoder () {
-	int recordedEncoderValue1, recordedEncoderValue2;
 	SensorValue[encoderError] = 0;
 	startFlywheel(VELOCITY_LONG);
-	clearTimer(T3);
-	bool performsWell = false;
-	delay(1000);
-	while(time1[T3]<5000 && !performsWell) {
-		recordedEncoderValue1 = nMotorEncoder[flywheel4];
-		delay(50);
-		recordedEncoderValue2 = nMotorEncoder[flywheel4];
-		if(recordedEncoderValue1!=recordedEncoderValue2)
-			performsWell = true;
-		delay(50);
-	}
-	if(performsWell)
+	delay(6000);
+	if(motor[flywheel4] == 127)
 		SensorValue[encoderError] = 1;
 	else
 		SensorValue[encoderError] = 0;
@@ -262,14 +234,21 @@ void pre_auton() {
 }
 
 task autonomous() {
-	AutonomousCodePlaceholderForTesting();  // Remove this function call once you have "real" code.
+	clearTimer(T2);
+	startFlywheel(VELOCITY_LONG);
+	while(time100[T1]<200) { delay(25); }
+	startTask(stopFlywheel);
+	setWheelSpeed();
+	delay(1500);
+	setWheelSpeed(127,-127);
+	delay(400);
+	setWheelSpeed(-127);
+	startFlywheel(VELOCITY_LONG);
+	delay(1500);
+	setWheelSpeed(0);
 }
 
 task usercontrol() {
-
-	if(SensorValue[encoderTest])
-		testEncoder();
-
 	init();
 
 	while (true) {
@@ -299,6 +278,5 @@ task usercontrol() {
 			currentGoalVelocity-=2;
 
 		logDrive();
-
 	}
 }
