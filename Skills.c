@@ -272,25 +272,27 @@ task intakeControl () {
 void testEncoder () {
 	int recordedEncoderValue1, recordedEncoderValue2;
 	SensorValue[encoderError] = 0;
-	startFlywheel(VELOCITY_LONG);
-	clearTimer(T3);
 	bool performsWell = false;
-	delay(1000);
-	while(time1[T3]<5000 && !performsWell) {
-		recordedEncoderValue1 = nMotorEncoder[flywheel4];
-		delay(50);
-		recordedEncoderValue2 = nMotorEncoder[flywheel4];
-		if(recordedEncoderValue1!=recordedEncoderValue2)
-			performsWell = true;
-		delay(50);
-	}
-	if(performsWell)
+	if(nMotorEncoder(flywheel4)!=10000)
+		performsWell = true;
+	//startFlywheel(VELOCITY_LONG);
+	//clearTimer(T3);
+	//delay(1000);
+	//while(time1[T3]<5000 && !performsWell) {
+	//	recordedEncoderValue1 = nMotorEncoder[flywheel4];
+	//	delay(50);
+	//	recordedEncoderValue2 = nMotorEncoder[flywheel4];
+	//	if(recordedEncoderValue1!=recordedEncoderValue2)
+	//		performsWell = true;
+	//	delay(50);
+	//}
+	if(!performsWell)
 		SensorValue[encoderError] = 1;
 	else
-		while(true) {
-			SensorValue[encoderError] = 0;
+		repeat(20) {
+			SensorValue[encoderError] = 1;
 			delay(100);
-			sensorValue[encoderError] = 1;
+			sensorValue[encoderError] = 0;
 			delay(100);
 		}
 	startTask(stopFlywheel);
@@ -299,21 +301,26 @@ void testEncoder () {
 //Initialises driver control code
 #warning "init"
 void init() {
+	//Slave Motors
 	slaveMotor(flywheel2,flywheel4);
 	slaveMotor(flywheel3,flywheel4);
 	slaveMotor(flywheel1,flywheel4);
-	startTask(intakeControl);
+
+	//Startup modes
 	if(!debugMode)
 		debugMode = (bool) SensorValue[debug];
-
 	if(!tuneMode)
 		tuneMode = (bool) SensorValue[tune];
-
 	if(!encoderTestMode)
 		encoderTestMode = (bool) SensorValue[encoderTest];
+
+	//Boot into test encoder mode
+	if(encoderTestMode)
+		testEncoder();
 }
 
 void pre_auton() {
+	init();
 	bStopTasksBetweenModes = true;
 }
 
@@ -323,10 +330,8 @@ task autonomous() {
 
 task usercontrol() {
 
-	init();
-
-	if(encoderTestMode)
-		testEncoder();
+	//Start Tasks
+	startTask(intakeControl);
 
 	while (true) {
 		lastUpButton=currentUpButton;
