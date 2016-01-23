@@ -38,7 +38,7 @@
 /////        ____\/////////_____\///////////////__      /////
 ///// Mark III Robot                                    /////
 ///// Driver Skills Code                              	/////
-///// Authors: Jonathan Damico (jj_damico@yahoo.com)    /////
+///// Authors: Jonathan Damico, Griffin Tabor           /////
 ///// Since: Jan. 22, 2016                              /////
 *////////////////////////////////////////////////////////////
 
