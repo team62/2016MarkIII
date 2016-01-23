@@ -237,18 +237,18 @@ task intakeControl () {
 	while(true) {
 		motor[intake]=(tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127;
 
-		if(vexRT(Btn5U)||tuneMode) {
+		if(vexRT(Btn5U)||tuneMode||autoIntake) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
-				motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127;
+				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
 			} else if (time1[T1]>velocityTime && (vexRT(Btn6U) || tuneMode) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
-				motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127;
+				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
 				delay(90);
 				clearTimer(T1);
 			} else {
 				motor[indexer] = 0;
 			}
 		} else if(vexRT(Btn5D)) {
-			motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127;
+			motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
 		} else {
 			motor[indexer] = 0;
 		}
