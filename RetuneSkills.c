@@ -54,7 +54,7 @@ bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 162, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 162 /*179*/, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
 //Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
@@ -153,8 +153,11 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=0.6501;//was 0.72
-	float kI=0.01532;
+	//float kP=3.3;//was 1.675
+	//float kI=0.0025;//was 0.0025
+
+	float kP=0.8001;//was 0.72
+	float kI=0.05532;
 	int limit = 15;
 	while(true){
 
@@ -229,20 +232,20 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 0;
-int velocityLimit = 23;
+int waitTime = 300;
+int velocityLimit = 100;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
 		motor[intake]=((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
 
-		if(vexRT(Btn5U)||tuneMode||autoIntake) {
+		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
 				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				} else if (/*time1[T1]>waitTime && */(vexRT(Btn6U) || (tuneMode||autoIntake)) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
+				} else if (time1[T1]>waitTime &&  (vexRT(Btn6U) || (autoIntake || tuneMode)) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
 				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				delay(100);
+				delay(90);//was 90
 				clearTimer(T1);
 				} else {
 				motor[indexer] = 0;

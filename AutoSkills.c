@@ -23,7 +23,7 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-enum { VELOCITY_LONG = 172, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 182, VELOCITY_HOLD = 30, VELOCITY_PIPE = 130 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
 bool tuneMode = false; //ONLY TRUE FOR PID TUNING
 
@@ -103,8 +103,8 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=1.0;
-	float kI=0.05736;
+	float kP=1.665;
+	float kI=0.0025;
 	int limit = 15;
 	while(true){
 
@@ -236,16 +236,16 @@ void pre_auton() {
 task autonomous() {
 	clearTimer(T2);
 	startFlywheel(VELOCITY_LONG);
-	while(time100[T1]<200) { delay(25); }
+	while(time100[T1]<600) { delay(25); }
 	startTask(stopFlywheel);
-	setWheelSpeed();
-	delay(1500);
-	setWheelSpeed(127,-127);
-	delay(400);
-	setWheelSpeed(-127);
-	startFlywheel(VELOCITY_LONG);
-	delay(1500);
-	setWheelSpeed(0);
+	//setWheelSpeed();
+	//delay(1500);
+	//setWheelSpeed(127,-127);
+	//delay(400);
+	//setWheelSpeed(-127);
+	//startFlywheel(VELOCITY_LONG);
+	//delay(1500);
+	//setWheelSpeed(0);
 }
 
 task usercontrol() {

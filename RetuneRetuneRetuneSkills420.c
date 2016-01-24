@@ -50,11 +50,11 @@
 /////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
 bool tuneMode = false; //acts like you're holding 5U and 6U
-bool debugMode = false; //prints to console
+bool debugMode = true; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 162, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 190, VELOCITY_PIPE = 175, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
 //Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
@@ -117,7 +117,9 @@ int currentVelocity;
 
 //Flywheel PID instance variables
 float error=0;
+float lastError=0;
 float integral=0;
+float derivative=0;
 int output;
 int velocities[5];
 
@@ -145,7 +147,7 @@ int getFlywheelVelocity(){
 		sum = sum + velocities[i];
 	return sum/5;
 }
-
+float kP;
 bool flywheelOn = false;
 //Controls the flywheel using PID
 #warning "flywheelControl"
@@ -153,17 +155,26 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=0.6501;//was 0.72
-	float kI=0.01532;
+	kP=2.2;//was 1.675
+	float kI=0.000;//1//07;//was 0.0025
+	float kD=0.0;
+
+	//float kP=0.8001;//was 0.72
+	//float kI=0.05532;
 	int limit = 15;
 	while(true){
-
+		if(currentGoalVelocity==VELOCITY_PIPE)
+			kP=2.05;//2.2 for NON AUTO - 1.5 for auto
+		else
+			kP=2.0;
 		currentVelocity = getFlywheelVelocity();//might need work
 		error = (currentGoalVelocity - currentVelocity);
 		integral = integral + error;
-		if(integral>(100/kI))
-			integral = 100/kI;
-		output = error*kP + integral*kI;
+		derivative = error-lastError;
+		lastError=error;
+		//if(integral>(100/kI))
+		//	integral = 100/kI;
+		output = error*kP + integral*kI+derivative*kD;
 		if(output >25){
 			if(output>motor[flywheel4]+limit){
 				motor[flywheel4]=motor[flywheel4]+limit;
@@ -177,8 +188,8 @@ task flywheelControl(){
 			//integral=0;
 		}
 		if(debugMode)
-			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
-		delay(80);
+			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d Derivative: %d", motor[flywheel1], error, error*kP, integral*kI, integral, derivative*kD);
+		delay(70);
 	}
 }
 
@@ -229,27 +240,27 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 0;
-int velocityLimit = 23;
+int waitTime = 300;
+int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
-		motor[intake]=((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
+		motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
-		if(vexRT(Btn5U)||tuneMode||autoIntake) {
+		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
-				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				} else if (/*time1[T1]>waitTime && */(vexRT(Btn6U) || (tuneMode||autoIntake)) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
-				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				delay(100);
+				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+			} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && time1[T1]>waitTime) {
+				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+				delay(150);
 				clearTimer(T1);
-				} else {
+			} else {
 				motor[indexer] = 0;
 			}
-			} else if(vexRT(Btn5D)) {
-			motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
-			} else {
+		} else if(vexRT(Btn5D)) {
+			motor[indexer] = ((tuneMode||autointake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
+		} else {
 			motor[indexer] = 0;
 		}
 	}
@@ -325,19 +336,46 @@ void pre_auton() {
 }
 
 task autonomous() {
-	startTask(intakeControl);
+	//startTask(intakeControl);
 	clearTimer(T2);
+	motor[intake] = 127;
+	motor[indexer] = 127;
 	startManualFlywheel();
-	while(time100[T2]<600) { delay(25); }
+	//while(true) {
+	//	if(getMotorVelocity(flywheel4)>142)
+	//		SensorValue[encoderError] = 1;
+	//	else
+	//		SensorValue[encoderError] = 0;
+	//	delay(25);
+	//}
+	delay(25000);
 	startTask(stopFlywheel);
-	//setWheelSpeed();
-	//delay(1500);
-	//setWheelSpeed(127,-127);
-	//delay(400);
-	//setWheelSpeed(-127);
-	//startFlywheel(VELOCITY_LONG);
-	//delay(1500);
-	//setWheelSpeed(0);
+	motor[intake] = -127;
+	motor[indexer] = -127;
+	setLeftWheelSpeed(50);
+	delay(800);
+	setWheelSpeed(90,90);
+	delay(150);
+	setWheelSpeed(0);
+	delay(700);
+	setWheelSpeed(-80,-78);
+	startManualFlywheel();
+	delay(2300);
+	setWheelSpeed(0);
+	delay(700);
+	setWheelSpeed(0,50);
+	delay(630);
+	setWheelSpeed(0);
+	delay(300);
+	setWheelSpeed(90);
+	delay(600);
+	setWheelSpeed(0);
+	delay(300);
+	setWheelSpeed(-30,-29);
+	delay(400);
+	setWheelSpeed(0);
+	motor[intake] = 127;
+	motor[indexer] = 127;
 }
 
 task usercontrol() {
@@ -346,10 +384,10 @@ task usercontrol() {
 	startTask(intakeControl);
 
 	while (true) {
-		lastUpButton=currentUpButton;
-		lastDownButton=currentDownButton;
-		currentUpButton = (bool)vexRT[Btn5U];
-		currentDownButton = (bool)vexRT[Btn5D];
+		//lastUpButton=currentUpButton;
+		//lastDownButton=currentDownButton;
+		//currentUpButton = (bool)vexRT[Btn5U];
+		//currentDownButton = (bool)vexRT[Btn5D];
 
 		if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_PIPE);
@@ -366,12 +404,11 @@ task usercontrol() {
 		else if(vexRT(Btn7D))
 			startManualFlywheel();
 
-		if(currentUpButton && !lastUpButton)
-			currentGoalVelocity+=2;
-		if(currentDownButton && !lastDownButton)
-			currentGoalVelocity-=2;
+		//if(currentUpButton && !lastUpButton)
+		//	currentGoalVelocity+=2;
+		//if(currentDownButton && !lastDownButton)
+		//	currentGoalVelocity-=2;
 
 		logDrive();
-
 	}
 }
