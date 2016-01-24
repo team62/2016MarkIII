@@ -1,6 +1,7 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in8,    indexHigh,      sensorLineFollower)
 #pragma config(Sensor, dgtl1,  encoderError,   sensorLEDtoVCC)
+#pragma config(Sensor, dgtl2,  flywheelEncoder, sensorQuadEncoder)
 #pragma config(Sensor, dgtl10, tune,           sensorTouch)
 #pragma config(Sensor, dgtl11, debug,          sensorTouch)
 #pragma config(Sensor, dgtl12, encoderTest,    sensorTouch)
@@ -54,7 +55,21 @@ bool debugMode = true; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 190, VELOCITY_PIPE = 175, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 740, VELOCITY_PIPE = 100, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+
+int min(int num1, int num2) {
+	if(num1>num2)
+		return num2;
+	else
+		return num1;
+}
+
+int max(int num1, int num2) {
+	if(num1>num2)
+		return num1;
+	else
+		return num2;
+}
 
 //Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
@@ -193,6 +208,44 @@ task flywheelControl(){
 	}
 }
 
+long lastdt=nSysTime;
+int rpm=0;
+int setrpm=0;
+float smooth=0;
+int cpwr=0;
+int btntoggle=0;
+float fwgain=2;
+int rpmoffset=30;
+#warning "drunkFlywheelControl"
+task drunkFlywheelControl() {
+	while (true) {
+		long tme=nSysTime;
+		rpm=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)/(float)60)/1000);
+		SensorValue[flywheelEncoder]=0;
+		//rpm = getMotorVelocity(flywheelEncoder);
+		int ipwr;
+		if (setrpm==0) {
+				ipwr=0;
+			} else {
+			//ipwr=min(max(((setrpm-rpm)*500)+(setrpm==0?0:32),0),127);
+ 			ipwr=min(max((((setrpm+rpmoffset)-rpm)*1000)+((setrpm+rpmoffset)==0?0:32),0),127);
+		}
+		motor[flywheel4]=ipwr;
+		lastdt=tme;
+		wait1Msec(10);
+	}
+}
+
+bool autoIntake = false;
+//Starts the flywheel for regular shots
+#warning "startAutoFlywheel"
+void startAutoFlywheel (int targetVelocity) {
+	setrpm = targetVelocity;
+	//startFlywheel(targetVelocity);							//NEEDS TESTING
+	startTask(drunkFlywheelControl);
+	autoIntake = false;
+}
+
 bool flywheelHold = false;
 //Starts the flywheel at a target velocity
 #warning "startFlywheel"
@@ -210,20 +263,13 @@ void startFlywheel (int targetVelocity) {
 	}
 }
 
-bool autoIntake = false;
-//Starts the flywheel for regular shots
-#warning "startAutoFlywheel"
-void startAutoFlywheel (int targetVelocity) {
-	startFlywheel(targetVelocity);							//NEEDS TESTING
-	autoIntake = false;
-}
-
 //Slows the flywheel down without breaking the motors
 #warning "stopFlywheel"
 task stopFlywheel () {
 	flywheelOn = false;
 	autoIntake = false;
 	stopTask(flywheelControl);
+	stopTask(drunkFlywheelControl);
 	while(motor[flywheel4]>0){
 		motor[flywheel4] -= 1;
 		delay(20);
@@ -336,18 +382,10 @@ void pre_auton() {
 }
 
 task autonomous() {
-	//startTask(intakeControl);
 	clearTimer(T2);
 	motor[intake] = 127;
 	motor[indexer] = 127;
 	startManualFlywheel();
-	//while(true) {
-	//	if(getMotorVelocity(flywheel4)>142)
-	//		SensorValue[encoderError] = 1;
-	//	else
-	//		SensorValue[encoderError] = 0;
-	//	delay(25);
-	//}
 	delay(25000);
 	startTask(stopFlywheel);
 	motor[intake] = -127;
@@ -384,10 +422,6 @@ task usercontrol() {
 	startTask(intakeControl);
 
 	while (true) {
-		//lastUpButton=currentUpButton;
-		//lastDownButton=currentDownButton;
-		//currentUpButton = (bool)vexRT[Btn5U];
-		//currentDownButton = (bool)vexRT[Btn5D];
 
 		if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_PIPE);
@@ -403,11 +437,6 @@ task usercontrol() {
 
 		else if(vexRT(Btn7D))
 			startManualFlywheel();
-
-		//if(currentUpButton && !lastUpButton)
-		//	currentGoalVelocity+=2;
-		//if(currentDownButton && !lastDownButton)
-		//	currentGoalVelocity-=2;
 
 		logDrive();
 	}
