@@ -54,7 +54,7 @@ bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 162, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 190, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 
 //Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
@@ -153,16 +153,19 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=0.6501;//was 0.72
-	float kI=0.01532;
+	float kP=1.80;//was 1.675
+	float kI=0.0000//1//07;//was 0.0025
+
+	//float kP=0.8001;//was 0.72
+	//float kI=0.05532;
 	int limit = 15;
 	while(true){
 
 		currentVelocity = getFlywheelVelocity();//might need work
 		error = (currentGoalVelocity - currentVelocity);
 		integral = integral + error;
-		if(integral>(100/kI))
-			integral = 100/kI;
+		//if(integral>(100/kI))
+		//	integral = 100/kI;
 		output = error*kP + integral*kI;
 		if(output >25){
 			if(output>motor[flywheel4]+limit){
@@ -178,7 +181,7 @@ task flywheelControl(){
 		}
 		if(debugMode)
 			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d", motor[flywheel1], error, error*kP, integral*kI, integral);
-		delay(80);
+		delay(70);
 	}
 }
 
@@ -229,27 +232,27 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 0;
-int velocityLimit = 23;
+int waitTime = 300;
+int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
-		motor[intake]=((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
+		motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
-		if(vexRT(Btn5U)||tuneMode||autoIntake) {
+		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
-				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				} else if (/*time1[T1]>waitTime && */(vexRT(Btn6U) || (tuneMode||autoIntake)) && (abs(currentGoalVelocity-currentVelocity)<velocityLimit)) {
-				motor[indexer] = ((tuneMode||autoIntake)+vexRT[Btn5U]-vexRT[Btn5D])*127;
-				delay(100);
+				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+			} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && time1[T1]>waitTime) {
+				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+				delay(150);
 				clearTimer(T1);
-				} else {
+			} else {
 				motor[indexer] = 0;
 			}
-			} else if(vexRT(Btn5D)) {
-			motor[indexer] = (tuneMode+vexRT[Btn5U]-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
-			} else {
+		} else if(vexRT(Btn5D)) {
+			motor[indexer] = ((tuneMode||autointake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
+		} else {
 			motor[indexer] = 0;
 		}
 	}
@@ -325,12 +328,20 @@ void pre_auton() {
 }
 
 task autonomous() {
-	startTask(intakeControl);
+	//startTask(intakeControl);
 	clearTimer(T2);
+	motor[intake] = 127;
+	motor[indexer] = 127;
 	startManualFlywheel();
-	while(time100[T2]<600) { delay(25); }
-	startTask(stopFlywheel);
-	//setWheelSpeed();
+	while(true) {
+		if(getMotorVelocity(flywheel4)>142)
+			SensorValue[encoderError] = 1;
+		else
+			SensorValue[encoderError] = 0;
+		delay(25);
+	}
+	//startTask(stopFlywheel);
+	//setWheelSpeed(-127);
 	//delay(1500);
 	//setWheelSpeed(127,-127);
 	//delay(400);
@@ -372,6 +383,5 @@ task usercontrol() {
 			currentGoalVelocity-=2;
 
 		logDrive();
-
 	}
 }
