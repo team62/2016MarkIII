@@ -1,13 +1,11 @@
-#pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in8,    indexHigh,      sensorLineFollower)
 #pragma config(Sensor, dgtl1,  encoderError,   sensorLEDtoVCC)
 #pragma config(Sensor, dgtl2,  flywheelEncoder, sensorQuadEncoder)
 #pragma config(Sensor, dgtl10, tune,           sensorTouch)
 #pragma config(Sensor, dgtl11, debug,          sensorTouch)
 #pragma config(Sensor, dgtl12, encoderTest,    sensorTouch)
-#pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           rightWheel2,   tmotorVex393TurboSpeed_HBridge, openLoop, reversed)
-#pragma config(Motor,  port2,           flywheel4,     tmotorVex393TurboSpeed_MC29, openLoop, reversed, encoderPort, I2C_1)
+#pragma config(Motor,  port2,           flywheel4,     tmotorVex393TurboSpeed_MC29, openLoop, reversed, encoderPort, dgtl2)
 #pragma config(Motor,  port3,           rightWheel13,  tmotorVex393TurboSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           flywheel3,     tmotorVex393HighSpeed_MC29, openLoop)
 #pragma config(Motor,  port5,           leftWheel2,    tmotorVex393TurboSpeed_MC29, openLoop)
@@ -55,8 +53,9 @@ bool debugMode = true; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 740, VELOCITY_PIPE = 100, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
-
+enum { VELOCITY_LONG = 750, VELOCITY_PIPE = 100, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+//enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
+//enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 int min(int num1, int num2) {
 	if(num1>num2)
 		return num2;
@@ -141,14 +140,19 @@ int velocities[5];
 //Populates an array with the most recent velocities of the flywheel,
 //used to calculate flywheel velocity
 //TODO consider revising after 23/1/16
+long lastdt=nSysTime;
 #warning "flywheelVelocity"
 task flywheelVelocity(){
 	int nextIndex=0;
 	while(true){
-		velocities[nextIndex]=getMotorVelocity(flywheel4);
+		long tme=nSysTime;
+		velocities[nextIndex]=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)==0?1:(float)(tme-lastdt)/(float)60)/1000);
+		//velocities[nextIndex]=getMotorVelocity(flywheel4);
+		SensorValue[flywheelEncoder]=0;
 		nextIndex++;
 		if(nextIndex==5)
 			nextIndex=0;
+		lastdt=tme;
 		delay(5);
 	}
 }
@@ -162,7 +166,7 @@ int getFlywheelVelocity(){
 		sum = sum + velocities[i];
 	return sum/5;
 }
-float kP;
+
 bool flywheelOn = false;
 //Controls the flywheel using PID
 #warning "flywheelControl"
@@ -170,18 +174,21 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	kP=2.2;//was 1.675
-	float kI=0.000;//1//07;//was 0.0025
+	float kP=2.1//2.2;//was 1.675
+	float kI=0.005;//1//07;//was 0.0025
 	float kD=0.0;
+	//float kP=3.0;//was 1.675
+	//float kI=0.0;//1//07;//was 0.0025
+	//float kD=0.0;
 
 	//float kP=0.8001;//was 0.72
 	//float kI=0.05532;
 	int limit = 15;
 	while(true){
-		if(currentGoalVelocity==VELOCITY_PIPE)
-			kP=2.05;//2.2 for NON AUTO - 1.5 for auto
-		else
-			kP=2.0;
+	//	if(currentGoalVelocity==VELOCITY_PIPE)
+	//		kP=2.05;//2.2 for NON AUTO - 1.5 for auto
+	//	else
+	//		kP=2.0;
 		currentVelocity = getFlywheelVelocity();//might need work
 		error = (currentGoalVelocity - currentVelocity);
 		integral = integral + error;
@@ -198,17 +205,16 @@ task flywheelControl(){
 				}else{
 				motor[flywheel4]=output;
 			}
-			}else if(output<0){
-			motor[flywheel4]=0;
+		}else if(output<20){
+			motor[flywheel4]=20;
 			//integral=0;
 		}
 		if(debugMode)
 			writeDebugStreamLine("Motors: %d, Error: %d, P: %d, I: %d Integral: %d Derivative: %d", motor[flywheel1], error, error*kP, integral*kI, integral, derivative*kD);
-		delay(70);
+		delay(50);
 	}
 }
 
-long lastdt=nSysTime;
 int rpm=0;
 int setrpm=0;
 float smooth=0;
@@ -220,7 +226,7 @@ int rpmoffset=30;
 task drunkFlywheelControl() {
 	while (true) {
 		long tme=nSysTime;
-		rpm=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)/(float)60)/1000);
+		rpm=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)==0?1:(float)(tme-lastdt)/(float)60)/1000);
 		SensorValue[flywheelEncoder]=0;
 		//rpm = getMotorVelocity(flywheelEncoder);
 		int ipwr;
@@ -234,16 +240,6 @@ task drunkFlywheelControl() {
 		lastdt=tme;
 		wait1Msec(10);
 	}
-}
-
-bool autoIntake = false;
-//Starts the flywheel for regular shots
-#warning "startAutoFlywheel"
-void startAutoFlywheel (int targetVelocity) {
-	setrpm = targetVelocity;
-	//startFlywheel(targetVelocity);							//NEEDS TESTING
-	startTask(drunkFlywheelControl);
-	autoIntake = false;
 }
 
 bool flywheelHold = false;
@@ -263,6 +259,16 @@ void startFlywheel (int targetVelocity) {
 	}
 }
 
+bool autoIntake = false;
+//Starts the flywheel for regular shots
+#warning "startAutoFlywheel"
+void startAutoFlywheel (int targetVelocity) {
+	setrpm = targetVelocity;
+	startFlywheel(targetVelocity);							//NEEDS TESTING
+	//startTask(drunkFlywheelControl);
+	autoIntake = false;
+}
+
 //Slows the flywheel down without breaking the motors
 #warning "stopFlywheel"
 task stopFlywheel () {
@@ -272,7 +278,7 @@ task stopFlywheel () {
 	stopTask(drunkFlywheelControl);
 	while(motor[flywheel4]>0){
 		motor[flywheel4] -= 1;
-		delay(20);
+		delay(15);
 	}
 	stopTask(flywheelVelocity);
 	stopTask(stopFlywheel);
@@ -419,7 +425,7 @@ task autonomous() {
 task usercontrol() {
 
 	//Start Tasks
-	startTask(intakeControl);
+	//startTask(intakeControl);
 
 	while (true) {
 
@@ -437,6 +443,9 @@ task usercontrol() {
 
 		else if(vexRT(Btn7D))
 			startManualFlywheel();
+
+motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
 		logDrive();
 	}
