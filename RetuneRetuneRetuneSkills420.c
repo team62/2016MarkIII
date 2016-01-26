@@ -53,7 +53,7 @@ bool debugMode = true; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 750, VELOCITY_PIPE = 100, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 790, VELOCITY_PIPE = 728, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 int min(int num1, int num2) {
@@ -185,10 +185,10 @@ task flywheelControl(){
 	//float kI=0.05532;
 	int limit = 15;
 	while(true){
-	//	if(currentGoalVelocity==VELOCITY_PIPE)
-	//		kP=2.05;//2.2 for NON AUTO - 1.5 for auto
-	//	else
-	//		kP=2.0;
+		//	if(currentGoalVelocity==VELOCITY_PIPE)
+		//		kP=2.05;//2.2 for NON AUTO - 1.5 for auto
+		//	else
+		//		kP=2.0;
 		currentVelocity = getFlywheelVelocity();//might need work
 		error = (currentGoalVelocity - currentVelocity);
 		integral = integral + error;
@@ -205,7 +205,7 @@ task flywheelControl(){
 				}else{
 				motor[flywheel4]=output;
 			}
-		}else if(output<20){
+			}else if(output<20){
 			motor[flywheel4]=20;
 			//integral=0;
 		}
@@ -214,7 +214,27 @@ task flywheelControl(){
 		delay(50);
 	}
 }
+int currVelo, veloA;
+task abi(){
+	startTask(flywheelVelocity);
+	int kP = 0.73;
+	int speedA = 127;
+	int speedB = 55;
+	veloA = currentGoalVelocity;
+	int motorSpeedA, motorSpeedB;
+	while(true) {
+		currVelo = getFlywheelVelocity();
 
+		motorSpeedA = speedA + currVelo * kP;
+		motorSpeedB = speedB + currVelo * kP;
+
+		if(currVelo < veloA) {
+			motor[flywheel4] = motorSpeedA;
+			} else if(currVelo > veloA) {
+			motor[flywheel4] = motorSpeedB;
+		}
+	}
+}
 int rpm=0;
 int setrpm=0;
 float smooth=0;
@@ -231,10 +251,10 @@ task drunkFlywheelControl() {
 		//rpm = getMotorVelocity(flywheelEncoder);
 		int ipwr;
 		if (setrpm==0) {
-				ipwr=0;
+			ipwr=0;
 			} else {
 			//ipwr=min(max(((setrpm-rpm)*500)+(setrpm==0?0:32),0),127);
- 			ipwr=min(max((((setrpm+rpmoffset)-rpm)*1000)+((setrpm+rpmoffset)==0?0:32),0),127);
+			ipwr=min(max((((setrpm+rpmoffset)-rpm)*1000)+((setrpm+rpmoffset)==0?0:32),0),127);
 		}
 		motor[flywheel4]=ipwr;
 		lastdt=tme;
@@ -264,8 +284,10 @@ bool autoIntake = false;
 #warning "startAutoFlywheel"
 void startAutoFlywheel (int targetVelocity) {
 	setrpm = targetVelocity;
-	startFlywheel(targetVelocity);							//NEEDS TESTING
+	currentGoalVelocity = targetVelocity;
+	//startFlywheel(targetVelocity);							//NEEDS TESTING
 	//startTask(drunkFlywheelControl);
+	startTask(abi);
 	autoIntake = false;
 }
 
@@ -276,6 +298,7 @@ task stopFlywheel () {
 	autoIntake = false;
 	stopTask(flywheelControl);
 	stopTask(drunkFlywheelControl);
+	stopTask(abi);
 	while(motor[flywheel4]>0){
 		motor[flywheel4] -= 1;
 		delay(15);
@@ -292,7 +315,7 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 300;
+int waitTime = 0;
 int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
@@ -303,16 +326,16 @@ task intakeControl () {
 		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
 				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-			} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && time1[T1]>waitTime) {
+				} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && time1[T1]>waitTime) {
 				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 				delay(150);
 				clearTimer(T1);
-			} else {
+				} else {
 				motor[indexer] = 0;
 			}
-		} else if(vexRT(Btn5D)) {
+			} else if(vexRT(Btn5D)) {
 			motor[indexer] = ((tuneMode||autointake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
-		} else {
+			} else {
 			motor[indexer] = 0;
 		}
 	}
@@ -425,7 +448,7 @@ task autonomous() {
 task usercontrol() {
 
 	//Start Tasks
-	//startTask(intakeControl);
+	startTask(intakeControl);
 
 	while (true) {
 
@@ -444,8 +467,8 @@ task usercontrol() {
 		else if(vexRT(Btn7D))
 			startManualFlywheel();
 
-motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+		//motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+		//motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
 		logDrive();
 	}
