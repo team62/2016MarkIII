@@ -57,9 +57,11 @@ bool encoderTestMode = false; //checks encoders at runtime
 
 int autonomousChoice = 0;
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 790, VELOCITY_PIPE = 728, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 790, VELOCITY_MID = 500, VELOCITY_PIPE = 640, VELOCITY_HOLD = 200 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
+enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 110, HIGH_SPEED_PIPE = 127 };
+enum { LOW_SPEED_LONG = 55, LOW_SPEED_MID = 45, LOW_SPEED_PIPE = 50 };
 
 typedef struct {
 	double kP;
@@ -171,7 +173,7 @@ void turn(int leftTarget, int rightTarget) {
 		setLeftWheelSpeed(leftOut);
 		setRightWheelSpeed(rightOut);
 		delay(50);
-	}	while(abs(l.error)>l.threshold  &&  abs(r.error)>r.threshold)
+	}	while(abs(l.error)>l.threshold  &&  abs(r.error)>r.threshold);
 		setWheelSpeed(0);
 }
 
@@ -298,11 +300,11 @@ task flywheelControl(){
 	}
 }
 int currVelo, veloA;
+int speedA = 127;
+int speedB = 55;
 task abi(){
 	startTask(flywheelVelocity);
 	int kP = 0.73;
-	int speedA = 127;
-	int speedB = 55;
 	veloA = currentGoalVelocity;
 	int motorSpeedA, motorSpeedB;
 	while(true) {
@@ -368,10 +370,17 @@ bool autoIntake = false;
 void startAutoFlywheel (int targetVelocity) {
 	setrpm = targetVelocity;
 	currentGoalVelocity = targetVelocity;
+
 	//startFlywheel(targetVelocity);							//NEEDS TESTING
 	//startTask(drunkFlywheelControl);
 	startTask(abi);
 	autoIntake = false;
+}
+
+void startAutoFlywheel (int targetVelocity, int highSpeed, int lowSpeed) {
+	speedA = highSpeed;
+	speedB = lowSpeed;
+	startAutoFlywheel(targetVelocity);
 }
 
 //Slows the flywheel down without breaking the motors
@@ -637,23 +646,23 @@ task usercontrol() {
 	while (true) {
 
 		if(vexRT(Btn8R))
-			startAutoFlywheel(VELOCITY_PIPE);
-
-		else if(vexRT(Btn8D))
-			startAutoFlywheel(VELOCITY_HOLD);
-
-		else if(vexRT(Btn8L))
-			startAutoFlywheel(VELOCITY_LONG);
+			startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE);
 
 		else if(vexRT(Btn8U))
+			startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+
+		else if(vexRT(Btn8L))
+			startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
+
+		else if(vexRT(Btn8D))
 			startTask(stopFlywheel);
 
-		else if(vexRT(Btn7D))
+		else if(vexRT(Btn7R))
 			startManualFlywheel();
 
 		//motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 		//motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-
+			//motor[flywheel4] = 70;
 		logDrive();
 	}
 }
