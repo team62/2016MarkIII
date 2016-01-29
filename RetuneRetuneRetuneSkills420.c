@@ -55,6 +55,7 @@ bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = true; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
+int autonomousChoice = 0;
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 790, VELOCITY_PIPE = 728, VELOCITY_HOLD = 30 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
@@ -437,7 +438,7 @@ task intakeControl () {
 
 //Tests the tempermental encoder for issues before executing main code
 #warning "testEncoder"
-void testEncoder () {
+bool testEncoder () {
 	int recordedEncoderValue1, recordedEncoderValue2;
 	SensorValue[encoderError] = 0;
 	bool performsWell = false;
@@ -464,6 +465,7 @@ void testEncoder () {
 		delay(100);
 	}
 	startTask(stopFlywheel);
+	return performsWell;
 }
 
 //Initialises driver control code
@@ -485,6 +487,134 @@ void init() {
 	//Boot into test encoder mode
 	if(encoderTestMode)
 		testEncoder();
+}
+
+void clearLCD () {
+	clearLCDLine(0);
+	clearLCDLine(1);
+}
+
+/*
+▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀█░▌
+▐░▌                    ▐░▌
+▐░█▄▄▄▄▄▄▄▄▄           ▐░▌
+▐░░░░░░░░░░░▌ ▄▄▄▄▄▄▄▄▄█░▌
+▐░█▀▀▀▀▀▀▀█░▌▐░░░░░░░░░░░▌
+▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀
+▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
+*/
+enum { MAIN_SCREEN = 0; BATT_SCREEN = 1; AUTON_SCREEN = 2; TEST_SCREEN = 3 };
+int currentScreen = MAIN_SCREEN;
+task LCD () {
+	clearLCD();
+	string lines[15];
+	lines[0] = "";
+	lines[1] = "";
+	lines[2] = "▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄";
+	lines[3] = "▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌";
+	lines[4] = "▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀█░▌";
+	lines[5] = "▐░▌                    ▐░▌";
+	lines[6] = "▐░█▄▄▄▄▄▄▄▄▄           ▐░▌";
+	lines[7] = "▐░░░░░░░░░░░▌ ▄▄▄▄▄▄▄▄▄█░▌";
+	lines[8] = "▐░█▀▀▀▀▀▀▀█░▌▐░░░░░░░░░░░▌";
+	lines[9] = "▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀";
+	lines[10] = "▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄";
+	lines[11] = "▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌";
+	lines[12] = "▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀";
+	lines[13] = "";
+	lines[14] = ""
+	for(int i = 0; i<14; i++) {
+		clearLCD();
+		displayLCDString(0,3, lines[i]);
+		displayLCDString(0,3, lines[i+1]);
+		delay(100);
+	}
+	displayLCDCenteredString(1,"Batts    Auton    Test");
+	delay(1000);
+	displayLCDCenteredString(0)
+	bLCDBacklight = true;
+	while(true) {
+		clearLCD();
+		displayLCDCenteredString(0,"62 NBN Mark III");
+		displayLCDString(1,0,"Batts    Auton    Test");
+		waitForPress();
+		if(nLCDButtons == leftButton) {
+			waitForRelease();
+			string batteryStatus;
+			sprintf(batteryStatus,"Main: %1.2f%c V, Bkup: %1.2f%c V",nImmediateBatteryLevel/1000.0, BackupBatteryLevel/1000.0)
+			displayLCDString(0, 0, batteryStatus);
+			displayLCDString(1, 0, "Back    Refresh");
+			waitForPress();
+		} else if(nLCDButtons == rightButton) {
+			waitForRelease();
+			displayLCDCenteredString(0, "ENCODER TESTING");
+			displayLCDCenteredString(1, "PLEASE WAIT");
+			if(testEncoder()) {
+				clearLCD();
+				displayLCDCenteredString(0, "Encoder Test Pass");
+			} else {
+				clearLCD();
+				displayLCDCenteredString(0, "Encoder Test Fail");
+				displayLCDCenteredString(1, "*****************");
+			}
+			delay(3000);
+		} else if(nLCDButtons == centerButton) {
+			waitForRelease();
+			int choice = 0;
+			while(nLCDButtons != centerButton) {
+				switch (choice) {
+					case 0:
+						clearLCD();
+						displayLCDCenteredString(0, "Auton 1");
+						displayLCDCenteredString(1, "<         Enter        >");
+						waitForPress();
+						if(nLCDButtons == leftButton){
+							waitForRelease();
+							count = 3;
+						} else if(nLCDButtons == rightButton) {
+							waitForRelease();
+							count++;
+						}
+					break;
+					case 1:
+						clearLCD();
+						displayLCDCenteredString(0, "Auton 2");
+						displayLCDCenteredString(1, "<         Enter        >");
+						waitForPress();
+						if(nLCDButtons == leftButton){
+							waitForRelease();
+							count--;
+						} else if(nLCDButtons == rightButton) {
+							waitForRelease();
+							count++;
+						}
+					break;
+					case 3:
+						clearLCD();
+						displayLCDCenteredString(0, "Auton 3");
+						displayLCDCenteredString(1, "<         Enter        >");
+						waitForPress();
+						//Increment or decrement "count" based on button press
+						if(nLCDButtons == leftButton) {
+							waitForRelease();
+							count--;
+						} else if(nLCDButtons == rightButton) {
+							waitForRelease();
+							count = 0;
+						}
+					break;
+					default:
+						count = 0;
+					break;
+				}
+			}
+			autonomousChoice = choice;
+		}
+	}
 }
 
 void pre_auton() {
