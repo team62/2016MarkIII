@@ -304,20 +304,28 @@ int speedA = 127;
 int speedB = 55;
 task abi(){
 	startTask(flywheelVelocity);
-	int kP = 0.73;
-	veloA = currentGoalVelocity;
+	double kP = 0;//.73;
+	motor[flywheel4] = 25;
+	while(motor[flywheel4] < speedB+11) {
+		motor[flywheel4]+=1;
+		delay(40);
+	}
 	int motorSpeedA, motorSpeedB;
 	while(true) {
+		veloA = currentGoalVelocity;
 		currVelo = getFlywheelVelocity();
 
-		motorSpeedA = speedA + currVelo * kP;
-		motorSpeedB = speedB + currVelo * kP;
+		motorSpeedA = speedA + (veloA-currVelo) * kP;
+		motorSpeedB = speedB + (veloA-currVelo) * kP;
+
+		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
 		if(currVelo < veloA) {
 			motor[flywheel4] = motorSpeedA;
 			} else if(currVelo > veloA) {
 			motor[flywheel4] = motorSpeedB;
 		}
+		delay(30);
 	}
 }
 int rpm=0;
@@ -407,7 +415,7 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 0;
+int waitTime = 200;
 int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
