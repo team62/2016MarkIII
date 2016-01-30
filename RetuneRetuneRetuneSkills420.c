@@ -57,11 +57,11 @@ bool encoderTestMode = false; //checks encoders at runtime
 
 int autonomousChoice = 0;
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 790, VELOCITY_MID = 500, VELOCITY_PIPE = 640, VELOCITY_HOLD = 200 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 790, VELOCITY_MID = 730, VELOCITY_PIPE = 710, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
-enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 110, HIGH_SPEED_PIPE = 127 };
-enum { LOW_SPEED_LONG = 55, LOW_SPEED_MID = 45, LOW_SPEED_PIPE = 50 };
+enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
+enum { LOW_SPEED_LONG = 55, LOW_SPEED_MID = 50, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 
 typedef struct {
 	double kP;
@@ -378,7 +378,6 @@ bool autoIntake = false;
 void startAutoFlywheel (int targetVelocity) {
 	setrpm = targetVelocity;
 	currentGoalVelocity = targetVelocity;
-
 	//startFlywheel(targetVelocity);							//NEEDS TESTING
 	//startTask(drunkFlywheelControl);
 	startTask(abi);
@@ -426,7 +425,7 @@ task intakeControl () {
 		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
 			if(SensorValue[indexHigh]>ballIndexerLimit) {
 				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-				} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && time1[T1]>waitTime) {
+				} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && (time1[T1]>waitTime || currentGoalVelocity == VELOCITY_HOLD)) {
 				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 				delay(150);
 				clearTimer(T1);
@@ -486,29 +485,19 @@ bool testEncoder () {
 }
 
 //Initialises driver control code
-#warning "init"
-void init() {
-	//Slave Motors
-	slaveMotor(flywheel2,flywheel4);
-	slaveMotor(flywheel3,flywheel4);
-	slaveMotor(flywheel1,flywheel4);
-
-	//Startup modes
-	if(!debugMode)
-		debugMode = (bool) SensorValue[debug];
-	if(!tuneMode)
-		tuneMode = (bool) SensorValue[tune];
-	if(!encoderTestMode)
-		encoderTestMode = (bool) SensorValue[encoderTest];
-
-	//Boot into test encoder mode
-	if(encoderTestMode)
-		testEncoder();
-}
 
 void clearLCD () {
 	clearLCDLine(0);
 	clearLCDLine(1);
+}
+
+void waitForRelease () {
+	while(nLCDButtons != 0)
+		delay(25);
+}
+void waitForPress () {
+	while (nLCDButtons == 0)
+		delay(25);
 }
 
 /*
@@ -524,15 +513,15 @@ void clearLCD () {
 ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
 ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
 */
-enum { MAIN_SCREEN = 0; BATT_SCREEN = 1; AUTON_SCREEN = 2; TEST_SCREEN = 3 };
+enum { MAIN_SCREEN = 0, BATT_SCREEN = 1, AUTON_SCREEN = 2, TEST_SCREEN = 3 };
 int currentScreen = MAIN_SCREEN;
 task LCD () {
 	clearLCD();
 	string lines[15];
 	lines[0] = "";
 	lines[1] = "";
-	lines[2] = "▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄";
-	lines[3] = "▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌";
+	lines[2] = "";
+	lines[3] = "";
 	lines[4] = "▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀█░▌";
 	lines[5] = "▐░▌                    ▐░▌";
 	lines[6] = "▐░█▄▄▄▄▄▄▄▄▄           ▐░▌";
@@ -552,21 +541,23 @@ task LCD () {
 	}
 	displayLCDCenteredString(1,"Batts    Auton    Test");
 	delay(1000);
-	displayLCDCenteredString(0)
 	bLCDBacklight = true;
 	while(true) {
 		clearLCD();
 		displayLCDCenteredString(0,"62 NBN Mark III");
-		displayLCDString(1,0,"Batts    Auton    Test");
+		displayLCDString(1,0,"Batts Auton Test");
 		waitForPress();
-		if(nLCDButtons == leftButton) {
+		if(nLCDButtons == 1) {
 			waitForRelease();
-			string batteryStatus;
-			sprintf(batteryStatus,"Main: %1.2f%c V, Bkup: %1.2f%c V",nImmediateBatteryLevel/1000.0, BackupBatteryLevel/1000.0)
-			displayLCDString(0, 0, batteryStatus);
-			displayLCDString(1, 0, "Back    Refresh");
+			clearLCD();
+			string mainBatteryStatus, backupBatteryStatus;
+			sprintf(mainBatteryStatus,"Main: %1.2f%c V", nImmediateBatteryLevel/1000.0)
+			sprintf(backupBatteryStatus,"Backup: %1.2f%c V", BackupBatteryLevel/1000.0)
+			displayLCDString(0, 0, mainBatteryStatus);
+			displayLCDString(1, 0, backupBatteryStatus);
 			waitForPress();
-		} else if(nLCDButtons == rightButton) {
+			waitForRelease();
+		} else if(nLCDButtons == 4) {
 			waitForRelease();
 			displayLCDCenteredString(0, "ENCODER TESTING");
 			displayLCDCenteredString(1, "PLEASE WAIT");
@@ -579,59 +570,83 @@ task LCD () {
 				displayLCDCenteredString(1, "*****************");
 			}
 			delay(3000);
-		} else if(nLCDButtons == centerButton) {
+		} else if(nLCDButtons == 2) {
 			waitForRelease();
 			int choice = 0;
-			while(nLCDButtons != centerButton) {
+			while(nLCDButtons != 2) {
 				switch (choice) {
 					case 0:
 						clearLCD();
-						displayLCDCenteredString(0, "Auton 1");
-						displayLCDCenteredString(1, "<         Enter        >");
+						displayLCDCenteredString(0, "Auton 0");
+						displayLCDCenteredString(1, "Select");
 						waitForPress();
-						if(nLCDButtons == leftButton){
+						if(nLCDButtons == 1){
 							waitForRelease();
-							count = 3;
-						} else if(nLCDButtons == rightButton) {
+							choice = 2;
+						} else if(nLCDButtons == 4) {
 							waitForRelease();
-							count++;
+							choice++;
 						}
 					break;
 					case 1:
 						clearLCD();
-						displayLCDCenteredString(0, "Auton 2");
-						displayLCDCenteredString(1, "<         Enter        >");
+						displayLCDCenteredString(0, "Auton 1");
+						displayLCDCenteredString(1, "Select");
 						waitForPress();
-						if(nLCDButtons == leftButton){
+						if(nLCDButtons == 1){
 							waitForRelease();
-							count--;
-						} else if(nLCDButtons == rightButton) {
+							choice--;
+						} else if(nLCDButtons == 4) {
 							waitForRelease();
-							count++;
+							choice++;
 						}
 					break;
-					case 3:
+					case 2:
 						clearLCD();
-						displayLCDCenteredString(0, "Auton 3");
-						displayLCDCenteredString(1, "<         Enter        >");
+						displayLCDCenteredString(0, "Auton 2");
+						displayLCDCenteredString(1, "Select");
 						waitForPress();
 						//Increment or decrement "count" based on button press
-						if(nLCDButtons == leftButton) {
+						if(nLCDButtons == 1) {
 							waitForRelease();
-							count--;
-						} else if(nLCDButtons == rightButton) {
+							choice--;
+						} else if(nLCDButtons == 4) {
 							waitForRelease();
-							count = 0;
+							choice = 0;
 						}
 					break;
 					default:
-						count = 0;
+						choice = 0;
 					break;
 				}
 			}
+			waitForRelease();
 			autonomousChoice = choice;
+			delay(50);
 		}
 	}
+}
+
+#warning "init"
+void init() {
+	startTask(LCD);
+
+	//Slave Motors
+	slaveMotor(flywheel2,flywheel4);
+	slaveMotor(flywheel3,flywheel4);
+	slaveMotor(flywheel1,flywheel4);
+
+	//Startup modes
+	if(!debugMode)
+		debugMode = (bool) SensorValue[debug];
+	if(!tuneMode)
+		tuneMode = (bool) SensorValue[tune];
+	if(!encoderTestMode)
+		encoderTestMode = (bool) SensorValue[encoderTest];
+
+	//Boot into test encoder mode
+	if(encoderTestMode)
+		testEncoder();
 }
 
 void pre_auton() {
@@ -661,6 +676,9 @@ task usercontrol() {
 
 		else if(vexRT(Btn8L))
 			startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
+
+		else if(vexRT(Btn7D))
+			startAutoFlywheel(VELOCITY_HOLD, HIGH_SPEED_HOLD, LOW_SPEED_HOLD);
 
 		else if(vexRT(Btn8D))
 			startTask(stopFlywheel);
