@@ -520,15 +520,15 @@ task LCD () {
 	string lines[10];
 	lines[0] = "";
 	lines[1] = "";
-	lines[2] = "   dD   .d888b. ";
-	lines[3] = "  d8'   VP  `8D ";
-	lines[4] = " d8'       odD' ";
-	lines[5] = "d8888b.  .88'   ";
-	lines[6] = "88' `8D j88.    ";
-	lines[7] = "`8888P  888888D ";
+	lines[2]="   __  ____  ";
+	lines[3]="  / / (___ \\ ";
+	lines[4]=" / /_   __) )";
+	lines[5]="| '_ \\ / __/ ";
+	lines[6]="| (_) ) |___ ";
+	lines[7]=" \\___/|_____)";
 	lines[8] = "";
 	lines[9] = "";
-	for(int i = 0; i<14; i++) {
+	for(int i = 0; i<9; i++) {
 		clearLCD();
 		displayLCDString(0,3, lines[i]);
 		displayLCDString(0,3, lines[i+1]);
