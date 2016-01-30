@@ -532,7 +532,7 @@ task LCD () {
 		clearLCD();
 		displayLCDString(0,3, lines[i]);
 		displayLCDString(0,3, lines[i+1]);
-		delay(100);
+		delay(500);
 	}
 	displayLCDCenteredString(1,"Batts    Auton    Test");
 	delay(1000);
