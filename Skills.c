@@ -540,6 +540,36 @@ task LCD () {
 		delay(50);
 	}
 	clearLCD();
+	int kanagasabapathyDelay = 200;
+	displayLCDCenteredString(0,"Kan");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	displayLCDCenteredString(0,"a");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	displayLCDCenteredString(0"gas");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	displayLCDCenteredString(0,"a");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	displayLCDCenteredString(0,"bap");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	displayLCDCenteredString(0,"a");
+	delay(kanagasabapathyDelay);
+	clearLCD();
+	string traveler3 = "thy";
+	displayLCDCenteredString(0,traveler3);
+	for(int i = 0; i<13; i++) {
+		last = traveler3;
+		sprintf(traveler3, "%s%s",last,"y");
+		clearLCD();
+		displayLCDCenteredString(0,traveler3);
+		delay(kanagasabapathyDelay);
+	}
+	clearLCD();
+
 	string phrases[5][2];
 	phrases[0][0] = "Someone get";
 	phrases[0][1] = "Jon a Tea";
@@ -556,7 +586,10 @@ task LCD () {
 	phrases[4][0] = "If only robotics";
 	phrases[4][1] = "was this hype";
 
-	int startupPhrase = random(4);
+	phrases[5][0] = "Griffin";
+	phrases[5][1] = "┬─┬";
+
+	int startupPhrase = random(5);
 
 	displayLCDCenteredString(0,phrases[startupPhrase][0]);
 	displayLCDCenteredString(1,phrases[startupPhrase][1]);
