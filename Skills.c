@@ -414,7 +414,7 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2000;
-int waitTime = 300;
+int waitTime = 250;
 int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
@@ -569,8 +569,8 @@ task LCD () {
 		if(nLCDButtons == 1) {
 			waitForRelease();
 			clearLCD();
-			sprintf(mainBatteryStatus,"Main: %1.2f%c V", nImmediateBatteryLevel/1000.0)
-			sprintf(backupBatteryStatus,"Secondary: %1.2f%c V", SensorValue[in1]/45.6)
+			sprintf(mainBatteryStatus,"B1: %1.2f%c V", nImmediateBatteryLevel/1000.0)
+			sprintf(backupBatteryStatus,"B2: %1.2f%c V", SensorValue[in1]/70)
 			displayLCDString(0, 0, mainBatteryStatus);
 			displayLCDString(1, 0, backupBatteryStatus);
 			waitForPress();
