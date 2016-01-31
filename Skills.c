@@ -39,7 +39,7 @@
 /////       __\///\\\\\\\\\/____/\\\\\\\\\\\\\\\_       /////
 /////        ____\/////////_____\///////////////__      /////
 ///// Mark III Robot                                    /////
-///// Driver Skills Code                              	/////
+///// Skills Code                              	        /////
 ///// Authors: Jonathan Damico, Griffin Tabor           /////
 ///// Since: Jan. 22, 2016                              /////
 *////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@
 /////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
 bool tuneMode = false; //acts like you're holding 5U and 6U
-bool debugMode = true; //prints to console
+bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
 int autonomousChoice = 0;
@@ -328,6 +328,7 @@ task abi(){
 		delay(30);
 	}
 }
+
 int rpm=0;
 int setrpm=0;
 float smooth=0;
@@ -438,18 +439,6 @@ task intakeControl () {
 			motor[indexer] = 0;
 		}
 	}
-	//if(SensorValue[indexHigh]>=ballIndexerLimit && (vexRT(Btn5U) || tuneMode)) {
-	//	motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
-	//} else if(!vexRT(Btn5D) && time1[T1]<velocityTime && /*abs(currentGoalVelocity-currentVelocity)>velocityLimit &&*/ SensorValue[indexHigh]<ballIndexerLimit) {
-	//	motor[indexer] = 0;
-	//} else if((vexRT(Btn5U) && vexRT(Btn6U)) || tuneMode || autoIntake || vexRT(Btn5D)) {
-	//	motor[indexer] = (tuneMode+vexRt[Btn5U]-vexRt[Btn5D])*127;
-	//	if(time1[T1]>velocityTime+150) {
-	//		clearTimer(T1);
-	//	}
-	//  } else {
-	//	motor[indexer] = 0;
-	//}
 }
 
 //Tests the tempermental encoder for issues before executing main code
@@ -500,18 +489,7 @@ void waitForPress () {
 		delay(25);
 }
 
-enum { MAIN_SCREEN = 0, BATT_SCREEN = 1, AUTON_SCREEN = 2, TEST_SCREEN = 3 };
-int currentScreen = MAIN_SCREEN;
-task LCD () {
-	bLCDBacklight = true;
-	wait1Msec(400);
-	clearLCD();
-	string mainBatteryStatus, backupBatteryStatus;
-	sprintf(mainBatteryStatus,"Main: %1.2f%c V", nImmediateBatteryLevel/1000.0);
-	sprintf(backupBatteryStatus,"Secondary: %1.2f%c V", SensorValue[in1]/45.6)
-	displayLCDString(0, 0, mainBatteryStatus);
-	displayLCDString(1, 0, backupBatteryStatus);
-	wait1Msec(2000);
+void LCDStartup () {
 	string lines[10];
 	string splash;
 	string last = "";
@@ -594,6 +572,25 @@ task LCD () {
 	displayLCDCenteredString(0,phrases[startupPhrase][0]);
 	displayLCDCenteredString(1,phrases[startupPhrase][1]);
 	delay(2000);
+}
+
+enum { MAIN_SCREEN = 0, BATT_SCREEN = 1, AUTON_SCREEN = 2, TEST_SCREEN = 3 };
+int currentScreen = MAIN_SCREEN;
+task LCD () {
+	bLCDBacklight = true;
+	wait1Msec(400);
+	clearLCD();
+
+	//Display battery voltage at start so we know what's up
+	string mainBatteryStatus, backupBatteryStatus;
+	sprintf(mainBatteryStatus,"Main: %1.2f%c V", nImmediateBatteryLevel/1000.0);
+	sprintf(backupBatteryStatus,"Secondary: %1.2f%c V", SensorValue[in1]/45.6)
+	displayLCDString(0, 0, mainBatteryStatus);
+	displayLCDString(1, 0, backupBatteryStatus);
+	wait1Msec(2000);
+
+	LCDStartup();
+
 	while(true) {
 		clearLCD();
 		displayLCDCenteredString(0,"62 NBN Mark III");
