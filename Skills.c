@@ -26,8 +26,11 @@
 #pragma autonomousDuration(0)
 #pragma userControlDuration(60)
 
-#include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
+#pragma systemFile
 
+#include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
+#include "JonLib/PID.c"
+#include "JonLib/Math.c"
 /*///////////////////////////////////////////////////////////
 /////____________/\\\\\____/\\\\\\\\\_____              /////
 ///// ________/\\\\////___/\\\///////\\\___             /////
@@ -63,31 +66,7 @@ enum { VELOCITY_LONG = 900, VELOCITY_MID = 760, VELOCITY_PIPE = 710, VELOCITY_HO
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 70, LOW_SPEED_MID = 50, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 
-typedef struct {
-	double kP;
-	double kI;
-	double kD;
-	double target;
-	double error;
-	double integral;
-	double derivative;
-	double lastError;
-	double threshold;
-} pid;
 
-int min(int num1, int num2) {
-	if(num1>num2)
-		return num2;
-	else
-		return num1;
-}
-
-int max(int num1, int num2) {
-	if(num1>num2)
-		return num1;
-	else
-		return num2;
-}
 
 //Sets the speed of wheels on the left side of the robot
 #warning "setLeftWheelSpeed"
@@ -115,20 +94,20 @@ void setWheelSpeed ( int wheelSpeed = 127 ) {
 	setWheelSpeed(wheelSpeed,wheelSpeed);
 }
 
-
+#warning "turn"
 void turn(int leftTarget, int rightTarget) {
 	nMotorEncoder[leftWheel13] = 0;
 	nMotorEncoder[rightWheel13] = 0;
 	pid l;
 	pid r;
-	//double kP = 0.018;
-	//double kI = 0.0002;
-	//double kD = 0.01;
+	//float kP = 0.018;
+	//float kI = 0.0002;
+	//float kD = 0.01;
 
-	double kP = 0.13;
-	double kI = 0.0008;
-	double kD = 0.5;
-	double threshold = 20;
+	float kP = 0.13;
+	float kI = 0.0008;
+	float kD = 0.5;
+	float threshold = 20;
 
 	l.threshold = threshold;
 	r.threshold = threshold;
@@ -177,6 +156,7 @@ void turn(int leftTarget, int rightTarget) {
 		setWheelSpeed(0);
 }
 
+#warning "drive"
 void drive (int target) {
 	turn(target,target);
 }
@@ -302,9 +282,10 @@ task flywheelControl(){
 int currVelo, veloA;
 int speedA = 127;
 int speedB = 55;
+#warning "abi"
 task abi(){
 	startTask(flywheelVelocity);
-	double kP = 0.1;//.73;
+	float kP = 0.1;//.73;
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
 		motor[flywheel4]+=1;
@@ -452,15 +433,19 @@ task intakeControl () {
 	}
 }
 
+#warning "clearLCD"
 void clearLCD () {
 	clearLCDLine(0);
 	clearLCDLine(1);
 }
 
+#warning "waitForRelease"
 void waitForRelease () {
 	while(nLCDButtons != 0)
 		delay(25);
 }
+
+#warning "waitForPress"
 void waitForPress () {
 	while (nLCDButtons == 0)
 		delay(25);
@@ -515,6 +500,7 @@ bool testEncoder () {
 	return performsWell;
 }
 
+#warning "LCDStartup"
 void LCDStartup () {
 	string lines[10];
 	string splash;
@@ -602,6 +588,7 @@ void LCDStartup () {
 
 enum { MAIN_SCREEN = 0, BATT_SCREEN = 1, AUTON_SCREEN = 2, TEST_SCREEN = 3 };
 int currentScreen = MAIN_SCREEN;
+#warning "LCD"
 task LCD () {
 	bLCDBacklight = true;
 	wait1Msec(400);
