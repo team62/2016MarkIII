@@ -57,7 +57,7 @@ bool encoderTestMode = false; //checks encoders at runtime
 
 int autonomousChoice = 0;
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 989, VELOCITY_MID = 710, VELOCITY_PIPE = 710, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 900, VELOCITY_MID = 760, VELOCITY_PIPE = 710, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
@@ -125,8 +125,8 @@ void turn(int leftTarget, int rightTarget) {
 	//double kI = 0.0002;
 	//double kD = 0.01;
 
-	double kP = 0.055;
-	double kI = 0.0005;
+	double kP = 0.13;
+	double kI = 0.0008;
 	double kD = 0.5;
 	double threshold = 20;
 
@@ -304,7 +304,7 @@ int speedA = 127;
 int speedB = 55;
 task abi(){
 	startTask(flywheelVelocity);
-	double kP = 0;//.73;
+	double kP = 0.1;//.73;
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
 		motor[flywheel4]+=1;
@@ -318,6 +318,8 @@ task abi(){
 		motorSpeedA = speedA + (veloA-currVelo) * kP;
 		motorSpeedB = speedB + (veloA-currVelo) * kP;
 
+		motorSpeedA = motorSpeedA>127?127:motorSpeedA;
+
 		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
 		if(currVelo < veloA) {
@@ -325,6 +327,10 @@ task abi(){
 			} else if(currVelo > veloA) {
 			motor[flywheel4] = motorSpeedB;
 		}
+		clearLCDLine(0);
+		displayLCDNumber(0,1,currVelo);
+		displayLCDNumber(0,5,veloA);
+		displayLCDNumber(0,10,motor[flywheel4]);
 		delay(30);
 	}
 }
@@ -410,17 +416,22 @@ task stopFlywheel () {
 //Revs flywheel for manual loaded balls
 #warning "startManualFlywheel"
 void startManualFlywheel () {
-	startFlywheel(VELOCITY_LONG);
+	startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
 	autoIntake = true;
 }
 
-int ballIndexerLimit = 2000;
-int waitTime = 250;
+int ballIndexerLimit = 2600;
+int waitTime = 300;
 int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
+		if(currentGoalVelocity == VELOCITY_LONG)
+			waitTime = 500;
+		else
+			waitTime = 350;
+
 		motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
 		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
@@ -441,40 +452,6 @@ task intakeControl () {
 	}
 }
 
-//Tests the tempermental encoder for issues before executing main code
-#warning "testEncoder"
-bool testEncoder () {
-	int recordedEncoderValue1, recordedEncoderValue2;
-	SensorValue[encoderError] = 0;
-	bool performsWell = false;
-	if(nMotorEncoder(flywheel4)!=10000)
-		performsWell = true;
-		startFlywheel(VELOCITY_LONG);
-		clearTimer(T3);
-		delay(1000);
-		while(time1[T3]<5000 && !performsWell) {
-			recordedEncoderValue1 = nMotorEncoder[flywheel4];
-			delay(50);
-			recordedEncoderValue2 = nMotorEncoder[flywheel4];
-			if(recordedEncoderValue1!=recordedEncoderValue2)
-				performsWell = true;
-			delay(50);
-		}
-	if(!performsWell)
-		SensorValue[encoderError] = 1;
-	else
-		repeat(5) {
-		SensorValue[encoderError] = 1;
-		delay(100);
-		sensorValue[encoderError] = 0;
-		delay(100);
-	}
-	startTask(stopFlywheel);
-	return performsWell;
-}
-
-//Initialises driver control code
-
 void clearLCD () {
 	clearLCDLine(0);
 	clearLCDLine(1);
@@ -487,6 +464,55 @@ void waitForRelease () {
 void waitForPress () {
 	while (nLCDButtons == 0)
 		delay(25);
+}
+
+//Tests the tempermental encoder for issues before executing main code
+#warning "testEncoder"
+bool testEncoder () {
+	playSound(soundException);
+	clearLCD();
+	displayLCDCenteredString(0,"LIFT");
+	displayLCDCenteredString(1,"ROBOT");
+	delay(1000);
+	SensorValue[encoderError] = 0;
+	bool performsWell = true;
+
+	//Flywheel
+	clearLCD();
+	displayLCDCenteredString(0,"Encoder Test");
+	int initValue = SensorValue[flywheelEncoder];
+	startAutoFlywheel(VELOCITY_LONG);
+	delay(1000);
+
+	if(SensorValue[flywheelEncoder]==initValue) {
+		performsWell = false;
+		displayLCDCenteredString(1,"Failed");
+	} else {
+		displayLCDCenteredString(1,"Passed");
+	}
+	startTask(stopFlywheel);
+
+	//Drivebase
+	delay(1000);
+	clearLCD();
+	displayLCDCenteredString(0,"Drivebase Test");
+	int initWheelValues[2];
+	initWheelValues[0] = nMotorEncoder(leftWheel13);
+	initWheelValues[1] = nMotorEncoder(rightWheel13);
+	setWheelSpeed();
+	delay(2000);
+	if(initWheelValues[0]==nMotorEncoder(leftWheel13)) {
+		performsWell = false;
+		displayLCDCenteredString(1,"Left Failed");
+	} else if(initWheelValues[1]==nMotorEncoder(rightWheel13)) {
+		performsWell = false;
+		displayLCDCenteredString(1,"Right Failed");
+	} else {
+		displayLCDCenteredString(1,"Passed");
+	}
+	setWheelSpeed(0);
+
+	return performsWell;
 }
 
 void LCDStartup () {
@@ -508,14 +534,14 @@ void LCDStartup () {
 		last = traveler1;
 		displayLCDString(0,0,last);
 		sprintf(traveler1," %s",last);
-		delay(50);
+		delay(55);
 	}
 	for(int i = 0; i<16; i++) {
 		clearLCD();
 		last = traveler2;
 		displayLCDString(1,0,last);
 		sprintf(traveler2," %s",last);
-		delay(50);
+		delay(55);
 	}
 	clearLCD();
 	int kanagasabapathyDelay = 200;
@@ -525,7 +551,7 @@ void LCDStartup () {
 	displayLCDCenteredString(0,"a");
 	delay(kanagasabapathyDelay);
 	clearLCD();
-	displayLCDCenteredString(0"gas");
+	displayLCDCenteredString(0,"gas");
 	delay(kanagasabapathyDelay);
 	clearLCD();
 	displayLCDCenteredString(0,"a");
@@ -544,11 +570,11 @@ void LCDStartup () {
 		sprintf(traveler3, "%s%s",last,"y");
 		clearLCD();
 		displayLCDCenteredString(0,traveler3);
-		delay(kanagasabapathyDelay);
+		delay(55);
 	}
 	clearLCD();
 
-	string phrases[5][2];
+	string phrases[6][2];
 	phrases[0][0] = "Someone get";
 	phrases[0][1] = "Jon a Tea";
 
@@ -565,7 +591,7 @@ void LCDStartup () {
 	phrases[4][1] = "was this hype";
 
 	phrases[5][0] = "Griffin";
-	phrases[5][1] = "┬─┬";
+	phrases[5][1] = "Table";
 
 	int startupPhrase = random(5);
 
@@ -583,8 +609,8 @@ task LCD () {
 
 	//Display battery voltage at start so we know what's up
 	string mainBatteryStatus, backupBatteryStatus;
-	sprintf(mainBatteryStatus,"Main: %1.2f%c V", nImmediateBatteryLevel/1000.0);
-	sprintf(backupBatteryStatus,"Secondary: %1.2f%c V", SensorValue[in1]/45.6)
+	sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0);
+	sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0);
 	displayLCDString(0, 0, mainBatteryStatus);
 	displayLCDString(1, 0, backupBatteryStatus);
 	wait1Msec(2000);
@@ -599,25 +625,15 @@ task LCD () {
 		if(nLCDButtons == 1) {
 			waitForRelease();
 			clearLCD();
-			sprintf(mainBatteryStatus,"B1: %1.2f%c V", nImmediateBatteryLevel/1000.0)
-			sprintf(backupBatteryStatus,"B2: %1.2f%c V", SensorValue[in1]/70)
+			sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0)
+			sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0)
 			displayLCDString(0, 0, mainBatteryStatus);
 			displayLCDString(1, 0, backupBatteryStatus);
 			waitForPress();
 			waitForRelease();
 		} else if(nLCDButtons == 4) {
 			waitForRelease();
-			displayLCDCenteredString(0, "ENCODER TESTING");
-			displayLCDCenteredString(1, "PLEASE WAIT");
-			if(testEncoder()) {
-				clearLCD();
-				displayLCDCenteredString(0, "Encoder Test Pass");
-				displayLCDCenteredString(1, "Pass");
-			} else {
-				clearLCD();
-				displayLCDCenteredString(0, "Encoder Test Fail");
-				displayLCDCenteredString(1, "****FAIL****");
-			}
+			testEncoder();
 			delay(3000);
 		} else if(nLCDButtons == 2) {
 			waitForRelease();
@@ -676,8 +692,20 @@ task LCD () {
 	}
 }
 
+bool alarm = false;
+task lowBattery() {
+	alarm = true;
+	while(true) {
+    playTone(700, 1); delay(1000);
+    playTone(400, 1); delay(1000);
+    playTone(200, 1); delay(1000);
+    delay(1000);
+	}
+}
+
 #warning "init"
 void init() {
+	playTone(700,10);
 	startTask(LCD);
 
 	//Slave Motors
@@ -704,10 +732,24 @@ void pre_auton() {
 }
 
 task autonomous() {
-	//turn(100,-100);
-	drive(1000);
-	delay(1000)
-	drive(-2000);
+	clearTimer(T2);
+	startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
+	delay(5000);
+	motor[intake] = 127;
+	motor[indexer] = 127;
+	delay(10000);
+	startTask(stopFlywheel);
+	stopTask(intakeControl);
+	motor[indexer] = 0;
+	motor[intake] = 0;
+
+	//turn(-200,200);
+
+	//startTask(intakeControl);
+
+	//drive(500);
+
+	//turn(-500,500);
 }
 
 task usercontrol() {
@@ -743,5 +785,12 @@ task usercontrol() {
 		//motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 			//motor[flywheel4] = 70;
 		logDrive();
+
+		//if(nImmediateBatteryLevel/1000.0>7.5 && alarm == false)
+		//	startTask(lowBattery);
+		//else {
+		//	stopTask(lowBattery);
+		//	alarm = false;
+		//}
 	}
 }
