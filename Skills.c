@@ -54,7 +54,7 @@
 /// dgtl12 = encoder test mode (checks encoder works at runtime)  ///
 /////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
-bool tuneMode = false; //acts like you're holding 5U and 6U
+bool tuneMode = true; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
@@ -99,6 +99,7 @@ void turn(int leftTarget, int rightTarget) {
 	nMotorEncoder[leftWheel13] = 0;
 	nMotorEncoder[rightWheel13] = 0;
 	pid l;
+
 	pid r;
 	//float kP = 0.018;
 	//float kI = 0.0002;
@@ -108,9 +109,9 @@ void turn(int leftTarget, int rightTarget) {
 	//float kI = 0.0008;
 	//float kD = 0.5;
 
-	float kP = 0.08;
-	float kI = 0;
-	float kD = 0;
+	float kP = 0.06;
+	float kI = 0.00001;
+	float kD = 0.01;
 	float threshold = 20;
 
 	l.threshold = threshold;
@@ -287,9 +288,9 @@ int currVelo, veloA;
 int speedA = 127;
 int speedB = 55;
 #warning "abi"
-task abi(){
+task abi() {
 	startTask(flywheelVelocity);
-	float kP = 0.06;//.73;
+	float kP = 0.07;//.73;
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
 		motor[flywheel4]+=1;
@@ -406,32 +407,27 @@ void startManualFlywheel () {
 }
 
 int ballIndexerLimit = 2600;
-int waitTime = 0;
 int velocityLimit = 900;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
-		if(currentGoalVelocity == VELOCITY_LONG)
-			waitTime = 500;
-		else
-			waitTime = 350;
+		//if(currentGoalVelocity == VELOCITY_LONG)
+		//	waitTime = 500;
+		//else
+		//	waitTime = 350;
 
 		motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
 		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
-			if(SensorValue[indexHigh]>ballIndexerLimit) {
+			if(SensorValue[indexHigh]>ballIndexerLimit || vexRT(Btn6U) || tuneMode||autoIntake) {
 				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-				} else if ((vexRT(Btn6U) || autoIntake || tuneMode) && (time1[T1]>waitTime || currentGoalVelocity == VELOCITY_HOLD)) {
-				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-				delay(150);
-				clearTimer(T1);
-				} else {
+			}  else {
 				motor[indexer] = 0;
 			}
-			} else if(vexRT(Btn5D)) {
+		} else if(vexRT(Btn5D)) {
 			motor[indexer] = ((tuneMode||autointake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
-			} else {
+		} else {
 			motor[indexer] = 0;
 		}
 	}
