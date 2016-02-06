@@ -111,9 +111,9 @@ task drivePID() {
 	//float kI = 0.0008;
 	//float kD = 0.5;
 
-	float kP = 0.25//25;
-	float kI = 0.002//0001;
-	float kD = 0.7//1;
+	float kP = 0.20//25;
+	float kI = 0.0025//0001;
+	float kD = 0.4//1;
 	float threshold = 10;
 
 	l.threshold = threshold;
@@ -742,28 +742,28 @@ void pre_auton() {
 
 task autonomous() {
 
-	startTask(drivePID);
+	//startTask(drivePID);
 	wait1Msec(200);
-	turn(-400,0);
-	wait1Msec(1000);
-	stopTask(drivePID);
-	setWheelSpeed(-50);
-	wait1Msec(500);
-	setWheelSpeed(0);
-	wait1Msec(200);
-	setWheelSpeed(85,127);
-	motor[intake] = -127;
-	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
-	wait1Msec(1700);
-	motor[intake] = 0;
-	autonIntake = true;
-	autonIndex = true;
-	startTask(intakeControl);
-	wait1Msec(400);
-	setWheelSpeed(0);
-	wait1Msec(1200);
+	//turn(-400,0);
+	//wait1Msec(1000);
+	//stopTask(drivePID);
+	//setWheelSpeed(-50);
+	//wait1Msec(500);
+	//setWheelSpeed(0);
+	//wait1Msec(200);
+	//setWheelSpeed(85,127);
+	//motor[intake] = -127;
+	//startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+	//wait1Msec(1700);
+	//motor[intake] = 0;
+	//autonIntake = true;
+	//autonIndex = true;
+	//startTask(intakeControl);
+	//wait1Msec(400);
+	//setWheelSpeed(0);
+	//wait1Msec(1200);
 	clearEncoders();
-	turn(0,-270);
+	turn(0,-300);
 	startTask(drivePID);
 	wait1Msec(1500);
 	autonShoot = true;
