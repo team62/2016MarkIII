@@ -65,7 +65,7 @@ enum { VELOCITY_LONG = 900, VELOCITY_MID = 760, VELOCITY_PIPE = 710, VELOCITY_HO
 //enum { VELOCITY_LONG = /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
-enum { LOW_SPEED_LONG = 70, LOW_SPEED_MID = 50, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
+enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 
 
 
@@ -111,9 +111,9 @@ task drivePID() {
 	//float kI = 0.0008;
 	//float kD = 0.5;
 
-	float kP = 0.20//25;
-	float kI = 0.0025//0001;
-	float kD = 0.4//1;
+	float kP = 0.21//25;
+	float kI = 0.00012//0001;
+	float kD = 0.0//1;
 	float threshold = 10;
 
 	l.threshold = threshold;
@@ -313,7 +313,7 @@ int speedB = 55;
 #warning "abi"
 task abi() {
 	startTask(flywheelVelocity);
-	float kP = 0.07;//.73;
+	float kP = 0.07;//.7;
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
 		motor[flywheel4]+=1;
@@ -431,6 +431,7 @@ void startManualFlywheel () {
 
 int ballIndexerLimit = 2600;
 int velocityLimit = 900;
+int waitTime = 300;
 bool autonIntake = false;
 bool autonShoot = false;
 bool autonIndex = false;
@@ -438,23 +439,39 @@ bool autonIndex = false;
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
-		//if(currentGoalVelocity == VELOCITY_LONG)
-		//	waitTime = 500;
-		//else
-		//	waitTime = 350;
+		if(currentGoalVelocity == VELOCITY_LONG) {
+			waitTime = 500;
+			motor[intake]=((tuneMode||autoIntake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
-		motor[intake]=((tuneMode||autoIntake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-
-		if(vexRT(Btn5U)||(tuneMode||autoIntake||autonIndex)) {
-			if(SensorValue[indexHigh]>ballIndexerLimit || vexRT(Btn6U) || tuneMode||autoIntake||autonShoot) {
-				motor[indexer] = ((tuneMode||autoIntake||autonIndex||vexRT[Btn5U])-vexRT[Btn5D])*127;
-			}  else {
+			if(vexRT(Btn5U)||(tuneMode||autoIntake||autonIndex)) {
+				if(SensorValue[indexHigh]>ballIndexerLimit) {
+					motor[indexer] = ((tuneMode||autoIntake||autonIndex||vexRT[Btn5U])-vexRT[Btn5D])*127;
+					} else if ((vexRT(Btn6U) || autoIntake || tuneMode || autonShoot) && (time1[T1]>waitTime || currentGoalVelocity == VELOCITY_HOLD)) {
+					motor[indexer] = ((tuneMode||autoIntake||autonIndex|| vexRT[Btn5U])-vexRT[Btn5D])*127;
+					delay(150);
+					clearTimer(T1);
+					} else {
+					motor[indexer] = 0;
+				}
+				} else if(vexRT(Btn5D)) {
+				motor[indexer] = ((tuneMode||autointake||autonIndex||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
+				} else {
 				motor[indexer] = 0;
 			}
-		} else if(vexRT(Btn5D)) {
-			motor[indexer] = ((tuneMode||autointake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
 		} else {
-			motor[indexer] = 0;
+			motor[intake]=((tuneMode||autoIntake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+
+			if(vexRT(Btn5U)||(tuneMode||autoIntake||autonIndex)) {
+				if(SensorValue[indexHigh]>ballIndexerLimit || vexRT(Btn6U) || tuneMode||autoIntake||autonShoot) {
+					motor[indexer] = ((tuneMode||autoIntake||autonIndex||vexRT[Btn5U])-vexRT[Btn5D])*127;
+				}  else {
+					motor[indexer] = 0;
+				}
+			} else if(vexRT(Btn5D)) {
+				motor[indexer] = ((tuneMode||autointake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
+			} else {
+				motor[indexer] = 0;
+			}
 		}
 	}
 }
@@ -708,6 +725,20 @@ task lowBattery() {
 	}
 }
 
+task autonAlign () {
+	clearTimer(T3);
+	int target = -360;
+	while(true) {
+		if(nMotorEncoder(rightWheel13)>target)
+			setRightWheelSpeed(-30);
+		else if (nMotorencoder(rightWheel13)<target)
+			setRightWheelSpeed(30);
+		else
+			setRightWheelSpeed(0);
+		delay(25);
+	}
+}
+
 #warning "init"
 void init() {
 	playTone(700,10);
@@ -741,13 +772,14 @@ void pre_auton() {
 }
 
 task autonomous() {
-	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
-	startTask(intakeControl);
-	autonIndex = true;
-	autonIntake = true;
-	autonShoot = true;
-	wait1Msec(20000);
-	startTask(stopFlywheel); //may not want to stop it at all
+	//startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE);
+	//startTask(intakeControl);
+	//autonIndex = true;
+	//autonIntake = true;
+	//autonShoot = true;
+	//wait1Msec(22000);
+	//startTask(stopFlywheel); //may not want to stop it at all
+	//stopTask(intakeControl);
 
 	startTask(drivePID);
 	wait1Msec(200);
@@ -758,32 +790,40 @@ task autonomous() {
 	wait1Msec(500);
 	setWheelSpeed(0);
 	wait1Msec(200);
-	setWheelSpeed(85,127);
+	setWheelSpeed(85,120);
 	motor[intake] = -127;
-	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+	startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE);
 	wait1Msec(1700);
 	motor[intake] = 0;
+	startTask(intakeControl);
 	autonIntake = true;
 	autonIndex = true;
 	wait1Msec(400);
 	setWheelSpeed(0);
 	wait1Msec(1200);
+
 	clearEncoders();
-	turn(0,-300);
-	startTask(drivePID);
-	wait1Msec(1500);
-	autonShoot = true;
-	autonIntake = false;
+	//turn(0,-320);
+	//startTask(drivePID);
+	//while(nMotorEncoder(rightWheel13)>-336)
+	//	setRightWheelSpeed(-30);
+	startTask(autonAlign);
+	delay(4000);
+	stopTask(autonAlign);
+	setWheelSpeed(0);
+	autonShoot = false;
+	autonIntake = true;
 	//startTask(spazIntake);
 	delay(3000);
+autonShoot = true;
 
-	//stoppit
-	startTask(stopFlywheel);
-	stopTask(spazIntake);
-	autonIndex = false;
-	autonShoot = false;
-	autonIntake = false;
-	motor[intake] = 0;
+	////stoppit
+	//startTask(stopFlywheel);
+	//stopTask(spazIntake);
+	//autonIndex = false;
+	//autonShoot = false;
+	//autonIntake = false;
+	//motor[intake] = 0;
 }
 
 task usercontrol() {
