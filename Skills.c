@@ -31,6 +31,7 @@
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 #include "JonLib/PID.c"
 #include "JonLib/Math.c"
+#include "JonLib/LCD.h"
 /*///////////////////////////////////////////////////////////
 /////____________/\\\\\____/\\\\\\\\\_____              /////
 ///// ________/\\\\////___/\\\///////\\\___             /////
@@ -54,7 +55,7 @@
 /// dgtl12 = encoder test mode (checks encoder works at runtime)  ///
 /////////////////////////////////////////////////////////////////////
 //DEBUG VARIABLES
-bool tuneMode = true; //acts like you're holding 5U and 6U
+bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
@@ -94,25 +95,26 @@ void setWheelSpeed ( int wheelSpeed = 127 ) {
 	setWheelSpeed(wheelSpeed,wheelSpeed);
 }
 
-#warning "turn"
-void turn(int leftTarget, int rightTarget) {
+#warning "drivePID"
+int leftTarget, rightTarget;
+task drivePID() {
 	nMotorEncoder[leftWheel13] = 0;
 	nMotorEncoder[rightWheel13] = 0;
 	pid l;
-
 	pid r;
+
 	//float kP = 0.018;
-	//float kI = 0.0002;
+	//float kI = 0.0;
 	//float kD = 0.5;
 
 	//float kP = 0.13;
 	//float kI = 0.0008;
 	//float kD = 0.5;
 
-	float kP = 0.06;
-	float kI = 0.00001;
-	float kD = 0.01;
-	float threshold = 20;
+	float kP = 0.25//25;
+	float kI = 0.002//0001;
+	float kD = 0.7//1;
+	float threshold = 10;
 
 	l.threshold = threshold;
 	r.threshold = threshold;
@@ -126,10 +128,12 @@ void turn(int leftTarget, int rightTarget) {
 	l.kD = kD;
 	r.kD = kD;
 
-	l.target = leftTarget;
-	r.target = rightTarget;
+	string debugLeft, debugRight;
 
 	do{
+		l.target = leftTarget;
+		r.target = rightTarget;
+
 		l.error = l.target - nMotorEncoder[leftWheel13]; //add sensor
 		r.error = r.target - nMotorEncoder[rightWheel13]; //same
 
@@ -154,11 +158,30 @@ void turn(int leftTarget, int rightTarget) {
 		leftOut = leftOut<-127?-127:leftOut;
 		rightOut = rightOut<-127?-127:rightOut;
 
+		clearLCD();
+		sprintf(debugLeft,"L %d %d %d",leftOut, l.integral, l.error);
+		sprintf(debugRight,"R %d %d %d",rightOut, r.integral, r.error);
+		displayLCDString(0,0,debugLeft);
+		displayLCDString(1,0,debugRight);
+		writeDebugStreamLine("%s %s",debugLeft,debugRight);
+
 		setLeftWheelSpeed(leftOut);
 		setRightWheelSpeed(rightOut);
 		delay(50);
-	}	while(abs(l.error)>l.threshold  &&  abs(r.error)>r.threshold);
+
+	}	while(true);
 		setWheelSpeed(0);
+}
+
+void clearEncoders () {
+	nMotorEncoder(leftWheel13) = 0;
+	nMotorEncoder(rightWheel13) = 0;
+}
+
+#warning "turn"
+void turn (int left, int right) {
+	leftTarget = left;
+	rightTarget = right;
 }
 
 #warning "drive"
@@ -408,6 +431,9 @@ void startManualFlywheel () {
 
 int ballIndexerLimit = 2600;
 int velocityLimit = 900;
+bool autonIntake = false;
+bool autonShoot = false;
+bool autonIndex = false;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
@@ -417,39 +443,31 @@ task intakeControl () {
 		//else
 		//	waitTime = 350;
 
-		motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+		motor[intake]=((tuneMode||autoIntake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
 
-		if(vexRT(Btn5U)||(tuneMode||autoIntake)) {
-			if(SensorValue[indexHigh]>ballIndexerLimit || vexRT(Btn6U) || tuneMode||autoIntake) {
-				motor[indexer] = ((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
+		if(vexRT(Btn5U)||(tuneMode||autoIntake||autonIndex)) {
+			if(SensorValue[indexHigh]>ballIndexerLimit || vexRT(Btn6U) || tuneMode||autoIntake||autonShoot) {
+				motor[indexer] = ((tuneMode||autoIntake||autonIndex||vexRT[Btn5U])-vexRT[Btn5D])*127;
 			}  else {
 				motor[indexer] = 0;
 			}
 		} else if(vexRT(Btn5D)) {
-			motor[indexer] = ((tuneMode||autointake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
+			motor[indexer] = ((tuneMode||autointake||autonIntake||vexRT[Btn5U])-vexRT[Btn5D])*127; //may want to add autoIntake to this line as well, in same way as above
 		} else {
 			motor[indexer] = 0;
 		}
 	}
 }
 
-#warning "clearLCD"
-void clearLCD () {
-	clearLCDLine(0);
-	clearLCDLine(1);
+task spazIntake () {
+	while(true) {
+		motor[intake] = 127;
+		wait1Msec(500);
+		motor[intake] = -20;
+		wait1Msec(500);
+	}
 }
 
-#warning "waitForRelease"
-void waitForRelease () {
-	while(nLCDButtons != 0)
-		delay(25);
-}
-
-#warning "waitForPress"
-void waitForPress () {
-	while (nLCDButtons == 0)
-		delay(25);
-}
 
 //Tests the tempermental encoder for issues before executing main code
 #warning "testEncoder"
@@ -711,6 +729,10 @@ void init() {
 	//Boot into test encoder mode
 	if(encoderTestMode)
 		testEncoder();
+
+	bool autonIntake = false;
+	bool autonIndex = false;
+	bool autonShoot = false;
 }
 
 void pre_auton() {
@@ -719,24 +741,43 @@ void pre_auton() {
 }
 
 task autonomous() {
-	//clearTimer(T2);
-	//startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
-	//delay(5000);
-	//motor[intake] = 127;
-	//motor[indexer] = 127;
-	//delay(10000);
-	//startTask(stopFlywheel);
-	//stopTask(intakeControl);
-	//motor[indexer] = 0;
-	//motor[intake] = 0;
 
-	//turn(-200,200);
+	startTask(drivePID);
+	wait1Msec(200);
+	turn(-400,0);
+	wait1Msec(1000);
+	stopTask(drivePID);
+	setWheelSpeed(-50);
+	wait1Msec(500);
+	setWheelSpeed(0);
+	wait1Msec(200);
+	setWheelSpeed(85,127);
+	motor[intake] = -127;
+	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+	wait1Msec(1700);
+	motor[intake] = 0;
+	autonIntake = true;
+	autonIndex = true;
+	startTask(intakeControl);
+	wait1Msec(400);
+	setWheelSpeed(0);
+	wait1Msec(1200);
+	clearEncoders();
+	turn(0,-270);
+	startTask(drivePID);
+	wait1Msec(1500);
+	autonShoot = true;
+	autonIntake = false;
+	//startTask(spazIntake);
+	delay(3000);
 
-	//startTask(intakeControl);
-
-	drive(1000);
-	//delay(2000);
-	//turn(-250,250);
+	//stoppit
+	startTask(stopFlywheel);
+	stopTask(spazIntake);
+	autonIndex = false;
+	autonShoot = false;
+	autonIntake = false;
+	motor[intake] = 0;
 }
 
 task usercontrol() {
