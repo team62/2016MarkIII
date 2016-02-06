@@ -741,27 +741,33 @@ void pre_auton() {
 }
 
 task autonomous() {
+	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+	startTask(intakeControl);
+	autonIndex = true;
+	autonIntake = true;
+	autonShoot = true;
+	wait1Msec(20000);
+	startTask(stopFlywheel); //may not want to stop it at all
 
-	//startTask(drivePID);
+	startTask(drivePID);
 	wait1Msec(200);
-	//turn(-400,0);
-	//wait1Msec(1000);
-	//stopTask(drivePID);
-	//setWheelSpeed(-50);
-	//wait1Msec(500);
-	//setWheelSpeed(0);
-	//wait1Msec(200);
-	//setWheelSpeed(85,127);
-	//motor[intake] = -127;
-	//startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
-	//wait1Msec(1700);
-	//motor[intake] = 0;
-	//autonIntake = true;
-	//autonIndex = true;
-	//startTask(intakeControl);
-	//wait1Msec(400);
-	//setWheelSpeed(0);
-	//wait1Msec(1200);
+	turn(-400,0);
+	wait1Msec(1000);
+	stopTask(drivePID);
+	setWheelSpeed(-50);
+	wait1Msec(500);
+	setWheelSpeed(0);
+	wait1Msec(200);
+	setWheelSpeed(85,127);
+	motor[intake] = -127;
+	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID);
+	wait1Msec(1700);
+	motor[intake] = 0;
+	autonIntake = true;
+	autonIndex = true;
+	wait1Msec(400);
+	setWheelSpeed(0);
+	wait1Msec(1200);
 	clearEncoders();
 	turn(0,-300);
 	startTask(drivePID);
