@@ -21,11 +21,11 @@ void setTarget ( int target = 0 ) {
 
 task orient () {
 	int speed;
-	int lowestMovePower = 19;
+	int lowestMovePower = 21;
 
-	gyroscope.kP = 0.1;
-	gyroscope.kI = 0.2;
-	gyroscope.kD = 0.0;
+	gyroscope.kP = 0.02;
+	gyroscope.kI = 0.0003;
+	gyroscope.kD = 0.005;
 
 	do {
 		//P
@@ -44,7 +44,7 @@ task orient () {
 
 		speed = gyroscope.kP*gyroscope.error + gyroscope.kI*gyroscope.integral + gyroscope.kD*gyroscope.derivative;
 
-		speed = abs(speed)<5?0:speed;
+		speed = abs(speed)<2?0:speed;
 		speed = abs(speed)>127?speed/abs(speed)*127:speed; //fancy way of high deadbands
 		speed = abs(speed)<lowestMovePower && abs(speed)>0?speed/abs(speed)*lowestMovePower:speed;
 
