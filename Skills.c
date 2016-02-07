@@ -170,10 +170,6 @@ void clearEncoders () {
 	nMotorEncoder(rightWheel13) = 0;
 }
 
-int getGyroValue () {
-	return SensorValue[gyro];
-}
-
 #warning "turn"
 void turn (int left, int right) {
 	leftTarget = left;
@@ -867,14 +863,11 @@ task usercontrol() {
 
 		if(vexRT(Btn6D))
 			startTask(orient);
-		else
+		else {
 			stopTask(orient);
+			logDrive();
+		}
 
-
-		//motor[intake]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-		//motor[indexer]=((tuneMode||autoIntake||vexRT[Btn5U])-vexRT[Btn5D])*127;
-			//motor[flywheel4] = 70;
-		logDrive();
 
 		//if(nImmediateBatteryLevel/1000.0>7.5 && alarm == false)
 		//	startTask(lowBattery);
