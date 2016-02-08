@@ -1,0 +1,3 @@
+[submodule "BNSBluetooth"]
+	path = BNSBluetooth
+	url = https://github.com/JMarple/BNSBluetooth
