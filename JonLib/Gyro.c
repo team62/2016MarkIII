@@ -23,18 +23,16 @@ task orient () {
 	int speed;
 	int lowestMovePower = 21;
 
-	gyroscope.kP = 0.02;
-	gyroscope.kI = 0.0003;
-	gyroscope.kD = 0.005;
+	gyroscope.kP = 0.4;
+	gyroscope.kI = 0.00025;
+	gyroscope.kD = 0.3;
 
 	do {
 		//P
 		gyroscope.error = gyroscope.target - SensorValue[gyro];
 
 		//I
-		if(gyroscope.error == 0)
-			gyroscope.integral = 0;
-		else if (abs(gyroscope.error)>10)
+		if (abs(gyroscope.error)>100)
 			gyroscope.integral = 0;
 		else
 			gyroscope.integral += gyroscope.error;
@@ -44,9 +42,9 @@ task orient () {
 
 		speed = gyroscope.kP*gyroscope.error + gyroscope.kI*gyroscope.integral + gyroscope.kD*gyroscope.derivative;
 
-		speed = abs(speed)<2?0:speed;
-		speed = abs(speed)>127?speed/abs(speed)*127:speed; //fancy way of high deadbands
-		speed = abs(speed)<lowestMovePower && abs(speed)>0?speed/abs(speed)*lowestMovePower:speed;
+		speed = gyroscope.error==0?0:speed;
+		speed = abs(speed)>30?speed/abs(speed)*30:speed; //fancy way of high deadbands
+		//speed = abs(speed)<lowestMovePower && abs(speed)>0?speed/abs(speed)*lowestMovePower:speed;
 
 		spin(speed);
 

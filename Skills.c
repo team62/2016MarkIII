@@ -63,13 +63,14 @@ bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
-int autonomousChoice = 0;
+int autonomousChoice
+= 0;
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 1000, VELOCITY_MID = 760, VELOCITY_PIPE = 710, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 880, VELOCITY_MID = 760, VELOCITY_PIPE = 710, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 //enum { VELOCITY_LONG /*192*/160, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 //enum { VELOCITY_LONG = 18000, VELOCITY_PIPE = 125, VELOCITY_HOLD = 30 };
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
-enum { LOW_SPEED_LONG = 90, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
+enum { LOW_SPEED_LONG = 70, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 
 
 
@@ -421,7 +422,7 @@ void startManualFlywheel () {
 	autoIntake = true;
 }
 
-int ballIndexerLimit = 2600;
+int ballIndexerLimit = 2000//2600;
 int velocityLimit = 900;
 int waitTime = 300;
 bool autonIntake = false;
@@ -860,6 +861,8 @@ task usercontrol() {
 		else if(vexRT(Btn7R))
 			startManualFlywheel();
 
+		if(vexRT(Btn7U))
+			SensorValue[gyro] = 0;
 
 		if(vexRT(Btn6D))
 			startTask(orient);
