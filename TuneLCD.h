@@ -29,8 +29,10 @@ int tuneValue ( double value ) {
 			else
 				place++;
 		}
-		else if(nLCDButtons==LCD_LEFT_RIGHT_BUTTON)
+		else if(nLCDButtons==LCD_LEFT_RIGHT_BUTTON) {
+			writeDebugStream("kP: %f kI: %f kD: %f", gyroscope.kP, gyroscope.kI, gyroscope.kD);
 			return(value);
+		}
 
 		delay(50);
 	}
