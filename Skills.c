@@ -556,6 +556,8 @@ void init() {
 	playTone(700,10);
 	startTask(LCD);
 
+	setBaudRate(UART1, baudRate57600);
+
 	//Slave Motors
 	slaveMotor(flywheel2,flywheel4);
 	slaveMotor(flywheel3,flywheel4);

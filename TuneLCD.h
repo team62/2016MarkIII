@@ -19,17 +19,21 @@ int tuneValue ( double value ) {
 			case 2: 	centerLine(1,"hundreds"); break;
 		}
 
-		if(nLCDButtons == LCD_LEFT_BUTTON)
+		if(nLCDButtons == LCD_LEFT_BUTTON) {
+			waitForRelease();
 			value = value-pow(10,place);
-		else if (nLCDButtons == LCD_RIGHT_BUTTON)
+		} else if (nLCDButtons == LCD_RIGHT_BUTTON) {
+			waitForRelease();
 			value = value+pow(10,place);
-		else if (nLCDButtons == LCD_CENTRE_BUTTON) {
+		} else if (nLCDButtons == LCD_CENTRE_BUTTON) {
+			waitForRelease();
 			if(place==2)
 				place = -5;
 			else
 				place++;
 		}
 		else if(nLCDButtons==LCD_LEFT_RIGHT_BUTTON) {
+			waitForRelease();
 			writeDebugStream("kP: %f kI: %f kD: %f", gyroscope.kP, gyroscope.kI, gyroscope.kD);
 			return(value);
 		}
@@ -45,12 +49,18 @@ task LCD () {
 		sprintf(currentValues, "%f %f %f", gyroscope.kP, gyroscope.kI, gyroscope.kD);
 		centerDisplay(currentValues, "kP  kI  kD");
 
-		if(nLCDButtons == LCD_LEFT_BUTTON)
+		if(nLCDButtons == LCD_LEFT_BUTTON) {
+			waitForRelease();
 			gyroscope.kP = tuneValue(gyroscope.kP);
-		if(nLCDButtons == LCD_CENTRE_BUTTON)
+		}
+		if(nLCDButtons == LCD_CENTRE_BUTTON) {
+			waitForRelease();
 			gyroscope.kI = tuneValue(gyroscope.kI);
-		if(nLCDButtons == LCD_RIGHT_BUTTON)
+		}
+		if(nLCDButtons == LCD_RIGHT_BUTTON) {
+			waitForRelease();
 			gyroscope.kD = tuneValue(gyroscope.kD);
+		}
 
 		delay(60);
 	}

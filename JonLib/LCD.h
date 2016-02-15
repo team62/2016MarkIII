@@ -25,15 +25,19 @@ void waitForPress () {
 		delay(25);
 }
 
-void centerLine ( int lineNumber, string contents ) {
-	displayLCDCenteredString(lineNumber, contents);
+void centerLine ( int lineNumber, string* contents ) {
+	string out;
+	sprintf(out,"%s",contents);
+	displayLCDCenteredString(lineNumber, out);
 }
 
-void line( int lineNumber, string contents ) {
-	displayLCDString(lineNumber,0,contents);
+void line( int lineNumber, string* contents ) {
+	string out;
+	sprintf(out,"%s",contents);
+	displayLCDString(lineNumber,0,out);
 }
 
-void centerDisplay (string line0, string line1) {
+void centerDisplay (string line0, string* line1) {
 	centerLine(0, line0);
 	centerLine(1, line1);
 }

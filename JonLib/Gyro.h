@@ -1,11 +1,11 @@
 #include "PID.h"
 #include "Drivebase.h"
+#include "BNSBluetooth/BNSlib_HC05.h"
 //#include "../MarkIIIPragma.c"
 
 #pragma systemFile
 
 pid gyroscope;
-
 
 void resetGyro() {
 	SensorValue[gyro] = 0;
@@ -21,9 +21,10 @@ void setTarget ( int target = 0 ) {
 
 task orient () {
 	int speed;
+	string out;
 	int lowestMovePower = 21;
 
-	gyroscope.kP = 0.4;
+	gyroscope.kP = 0.1;
 	gyroscope.kI = 0.00025;
 	gyroscope.kD = 0.3;
 
@@ -47,6 +48,8 @@ task orient () {
 		//speed = abs(speed)<lowestMovePower && abs(speed)>0?speed/abs(speed)*lowestMovePower:speed;
 
 		spin(speed);
+		sprintf(out, "%d",SensorValue[gyro]);
+		bnsSerialSend(UART1, out);
 
 	} while(true);
 }
