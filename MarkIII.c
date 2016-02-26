@@ -561,6 +561,20 @@ task autonAlign () {
 	}
 }
 
+#warning "reverseFlywheel"
+task reverseFlywheel () {
+	startTask(stopFlywheel);
+	int encoder1, encoder2;
+	do {
+		encoder1 = SensorValue[flywheelEncoder];
+		wait1Msec(500);
+		encoder2 = SensorValue[flywheelEncoder];
+		wait1Msec(500);
+	} while(encoder1!=encoder2);
+	while(vexRT(Btn7L))
+		motor[flywheel4] = -50;
+}
+
 #warning "init"
 void init() {
 	playTone(700,10);
@@ -856,6 +870,11 @@ task usercontrol() {
 			//playSound(soundUpwardTones);
 			playSoundFile("noneed.wav");
 		}
+
+		if(vexRT(Btn7L))
+			startTask(reverseFlywheel);
+		else
+			stopTask(reverseFlywheel);
 
 		if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE);
