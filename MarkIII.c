@@ -376,6 +376,7 @@ bool flywheelHold = false;
 //Starts the flywheel at a target velocity
 #warning "startFlywheel"
 void startFlywheel (int targetVelocity) {
+	stopTask(stopFlywheel);
 	currentGoalVelocity = targetVelocity;
 	if(targetVelocity == (int) VELOCITY_HOLD) {	//If we are holding the motors,
 		motor[flywheel4] = VELOCITY_HOLD;					//we don't want to startup the PID
@@ -393,6 +394,7 @@ bool autoIntake = false;
 //Starts the flywheel for regular shots
 #warning "startAutoFlywheel"
 void startAutoFlywheel (int targetVelocity) {
+	stopTask(stopFlywheel);
 	setrpm = targetVelocity;
 	currentGoalVelocity = targetVelocity;
 	//startFlywheel(targetVelocity);							//NEEDS TESTING
@@ -417,7 +419,7 @@ task stopFlywheel () {
 	stopTask(abi);
 	while(motor[flywheel4]>0){
 		motor[flywheel4] -= 1;
-		delay(15);
+		delay(30);
 	}
 	stopTask(flywheelVelocity);
 	stopTask(stopFlywheel);
