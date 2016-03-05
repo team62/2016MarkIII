@@ -68,10 +68,10 @@ task usercontrol() {
 	while (true) {
 
 		if(vexRT(Btn7U)){
-			motor(flywheel1) = -70;
-			motor(flywheel2) = -70;
-			motor(flywheel3) = -70;
-			motor(flywheel4) = -70;
+			motor(flywheel1) = -127;
+			motor(flywheel2) = -127;
+			motor(flywheel3) = -127;
+			motor(flywheel4) = -127;
 		}
 		else if(vexRT(Btn7D)){
 			motor(flywheel1) = 70;
