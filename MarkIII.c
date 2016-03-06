@@ -1,9 +1,9 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in2,    gyro,           sensorGyro)
-#pragma config(Sensor, in3,    indexLow,       sensorLineFollower)
-#pragma config(Sensor, in4,    indexHigh,      sensorLineFollower)
 #pragma config(Sensor, dgtl1,  encoderError,   sensorLEDtoVCC)
 #pragma config(Sensor, dgtl2,  flywheelEncoder, sensorQuadEncoder)
+#pragma config(Sensor, dgtl4,  indexHigh,      sensorTouch)
+#pragma config(Sensor, dgtl5,  indexLow,       sensorTouch)
 #pragma config(Sensor, dgtl10, tune,           sensorTouch)
 #pragma config(Sensor, dgtl11, debug,          sensorTouch)
 #pragma config(Sensor, dgtl12, encoderTest,    sensorTouch)
@@ -71,10 +71,10 @@ int autonomousChoice = 0;
 #include "LCD.c"
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 900, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
-enum { LOW_SPEED_LONG = 70, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = 1000, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { LOW_SPEED_LONG = 65, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
+enum { WAIT_LONG = 750, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 //Sets the speed of wheels on the left side of the robot
@@ -107,9 +107,13 @@ task drivePID() {
 	//float kI = 0.0008;
 	//float kD = 0.5;
 
-	float kP = 0.04//25;
-	float kI = 0.0004;
-	float kD = 0.15;
+	//float kP = 0.04//25;
+	//float kI = 0.0004;
+	//float kD = 0.15;
+
+	float kP = 0.3;
+	float kI = 0.00;
+	float kD = 0.5;
 
 	float threshold = 10;
 
@@ -188,13 +192,18 @@ void drive (int target) {
 	turn(target,target);
 }
 
-void sturn (int target, int width) {
+void drive(int speed, int time) {
+	setWheelSpeed(speed);
+	wait1Msec(time);
+}
+
+void sturn (int target, int time) {
 	turn(target/2, target);
-	while(nMotorEncoder(leftWheel13)<leftTarget-20) { delay(25); }
+	delay(time);
 	turn(target/2,0);
 }
 
-void sturn (int target)
+void sturn (int target) {
 	sturn(target, 1);
 }
 
@@ -327,7 +336,7 @@ task abi() {
 	float kP = 0.1;//.07; for mid/pipe
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
-		motor[flywheel4]+=1;
+		motor[flywheel4]+=2;
 		delay(40);
 	}
 	int motorSpeedA, motorSpeedB;
@@ -434,7 +443,7 @@ task stopFlywheel () {
 	stopTask(drunkFlywheelControl);
 	stopTask(abi);
 	while(motor[flywheel4]>0){
-		motor[flywheel4] -= 1;
+		motor[flywheel4] -= 2;
 		delay(15);
 	}
 	stopTask(stopFlywheel);
@@ -465,10 +474,9 @@ task intakeControl () {
 
 			while (vexRT(Btn5U)) {
 				if(vexRT(Btn6U)) {
-					//if(sensorValue[indexHigh]<ballIndexerLimit && flywheelVelocity<currentGoalVelocity+30) {
-					if(sensorValue[indexHigh]<ballIndexerLimit && waitTime!=0) {
+					//if(sensorValue[indexHigh] && flywheelVelocity<currentGoalVelocity+30) {
+					if(sensorValue[indexHigh] && waitTime!=0) {
 						while(time1[T1]<waitTime) {
-							playSound(soundBlip);
 							motor[indexer] = -7;
 							delay(25);
 						}
@@ -477,11 +485,11 @@ task intakeControl () {
 					}
 					else
 						motor[indexer] = 127;
-					delay(200);
+					delay(100);
 				} else if(vexRT(Btn6D)) {
 					motor[indexer] = -127;
-					delay(300);
-				} else if(SensorValue[indexLow]<ballIndexerLimit || SensorValue[indexHigh]<ballIndexerLimit) {
+					delay(250);
+				} else if(SensorValue[indexLow] || SensorValue[indexHigh]) {
 					motor[indexer] = -7;
 				} else {
 					motor[indexer] = (vexRT(Btn5U)-vexRT(Btn5D))*127;
@@ -646,252 +654,17 @@ void pre_auton() {
 }
 
 void autonomous0 () {
-	startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG);
-	wait1Msec(3000);
-	startTask(intakeControl);
-	autoIntake = true;
-	autonIndex = true;
-	autonShoot = true;
-	wait1Msec(5000);
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	turn(-450, 450);
-	startTask(drivePID);
-	wait1Msec(2000);
-	stopTask(drivePID);
-	setWheelSpeed(0);
-	startTask(stopFlywheel);
-	wait1Msec(500);
-	autonIntake = true;
-	autonIndex = true;
-	setWheelSpeed(127);
-	wait1Msec(1500);
-	setWheelSpeed(0);
+	drive(60,2000);
+	setWheelSpeed(60,0);
+	wait1Msec(1000);
+	drive(60,1000);
+	setWheelSpeed(60,20);
+	wait1Msec(1000);
+	drive(60,1000);
 }
 
-//auton0 sans encoders
-void autonomous1 () {
-	startAutoFlywheel(VELOCITY_LONG-10, HIGH_SPEED_LONG, LOW_SPEED_LONG);
-	wait1Msec(3000);
-	startTask(intakeControl);
-	autoIntake = true;
-	autonIndex = true;
-	autonShoot = true;
-	wait1Msec(5000);
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	setWheelSpeed(-127);
-	wait1Msec(750);
-	setWheelSpeed(0);
-}
-
-//auton0 sans encoders bump back
-void autonomous3 () {
-	SensorValue[gyro] = 0;
-	startAutoFlywheel(VELOCITY_LONG-10, HIGH_SPEED_LONG, LOW_SPEED_LONG);
-	wait1Msec(3000);
-	startTask(intakeControl);
-	autoIntake = true;
-	autonIndex = true;
-	autonShoot = true;
-	wait1Msec(5000);
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	stopTask(intakeControl);
-	setWheelSpeed(-127);
-	wait1Msec(600);
-	setWheelSpeed(0);
-	wait1Msec(500);
-	motor[intake] = -127;
-	setWheelSpeed(90, 127);
-	wait1Msec(400);
-	setWheelSpeed(0);
-	wait1Msec(500);
-	startTask(orient);
-	wait1Msec(1000);
-	stopTask(orient);
-	setWheelSpeed(-90);
-	wait1Msec(500);
-	setWheelSpeed(0);
-}
-
-void autonomous2 () {
-	autonShoot = false;
-	clearEncoders();
-	startTask(drivePID);
-	startTask(intakeControl);
-	autonIntake = true;
-	autonIndex = true;
-	drive(520);
-	wait1Msec(1000);
-	drive(400); // distance to first stack
-	wait1Msec(1000);
-	stopTask(intakeControl);
-	turn(400,-400);
-	wait1Msec(1000);
-	motor[intake] = -127;
-	motor[indexer] = -127;
-	wait1Msec(1500);
-	startTask(intakeControl);
-	turn(-350, 350);
-	wait1Msec(1000);
-	drive(520);
-	wait1Msec(1000);
-	drive(400);
-	wait1Msec(1000);
-	stopTask(intakeControl);
-	turn(350,-350);
-	wait1Msec(1000);
-	motor[intake] = -127;
-	motor[indexer] = -127;
-	wait1Msec(1500);
-	turn(250, -250);
-	wait1Msec(1000);
-}
-
-void blueautonomous () {
-	SensorValue[gyro] = 0;
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	clearEncoders();
-	startTask(drivePID);
-	startTask(intakeControl);
-	drive(400)
-	wait1Msec(700);
-	turn(600,300);
-	wait1Msec(700);
-	turn(300, 600);
-	wait1Msec(1200);
-	drive(-700);
-	wait1Msec(1000);
-	startTask(orient);
-	wait1Msec(1000);
-	stopTask(orient);
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	turn(650,650);
-	wait1Msec(900);
-	turn(400,700);
-	wait1Msec(1500);
-	drive(900);
-	startTask(intakeControl);
-	autonIndex = true;
-	autonIntake = true;
-	wait1Msec(2000);
-	drive(-300);
-	wait1Msec(1500);
-	startTask(orient);
-	autonIndex = false;
-	autonIntake = false;
-	wait1Msec(1000);
-	stopTask(orient);
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	drive(-700);
-	wait1Msec(1000);
-	startTask(orient);
-	autonIndex = false;
-	autonIntake = false;
-	wait1Msec(2000);
-	stopTask(orient);
-}
-
-void redautonomous () {
-	SensorValue[gyro] = 0;
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	clearEncoders();
-	startTask(drivePID);
-	startTask(intakeControl);
-	drive(400)
-	wait1Msec(700);
-	turn(300,600);
-	wait1Msec(700);
-	turn(600, 300);
-	wait1Msec(1200);
-	drive(-800);
-	wait1Msec(1000);
-	startTask(orient);
-	wait1Msec(1000);
-	stopTask(orient);
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	turn(700,700);
-	wait1Msec(900);
-	turn(700,400);
-	wait1Msec(1500);
-	drive(900);
-	startTask(intakeControl);
-	autonIndex = true;
-	autonIntake = true;
-	wait1Msec(2000);
-	drive(-300);
-	wait1Msec(1500);
-	startTask(orient);
-	autonIndex = false;
-	autonIntake = false;
-	wait1Msec(1000);
-	stopTask(orient);
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	drive(-700);
-	wait1Msec(1000);
-	startTask(orient);
-	autonIndex = false;
-	autonIntake = false;
-	wait1Msec(2000);
-	stopTask(orient);
-}
-
-void autonomous4 () {
-	SensorValue[gyro] = 0;
-	autonIntake = false;
-	autonIndex = false;
-	autonShoot = false;
-	clearEncoders();
-	startTask(drivePID);
-	startTask(intakeControl);
-	drive(400)
-	wait1Msec(700);
-	turn(300,600);
-	wait1Msec(700);
-	turn(600, 300);
-	wait1Msec(1200);
-	drive(-800);
-	wait1Msec(1000);
-}
-
-void autonomous5 () {
-	clearEncoders();
-	leftTarget = 0;
-	rightTarget = 0;
-	startTask(drivePID);
-	drive(1500);
-	wait1Msec(2000);
-
-}
-
-/*
-autonomous0 = spin around and shoot
-autonomous1 = just drive forward
-autonomous3 = knock first stack back
-autonomous4 = knock first two stacks Back
-*/
 task autonomous () {
-	startTask(drivePID):
-	drive(1000);
+	autonomous0():
 }
 
 task usercontrol() {
@@ -913,7 +686,8 @@ task usercontrol() {
 			} else {
 				motor[flywheel4] = -127;
 				while(vexRT(Btn7L)) { delay(25); }
-				while(motor[flywheel4]<0) { motor[flywheel4]+=1; delay(25); }
+				while(motor[flywheel4]<0) { motor[flywheel4]+=2; delay(25); }
+				motor[flywheel4] = 0;
 			}
 		}
 
@@ -941,7 +715,9 @@ task usercontrol() {
 			stopTask(orient);
 			logDrive();
 		}
-
+		string text;
+		sprintf(text, "%d", SensorValue[indexHigh]);
+		line(1,text);
 		//if(nImmediateBatteryLevel/1000.0>7.5 && alarm == false)
 		//	startTask(lowBattery);
 		//else {
