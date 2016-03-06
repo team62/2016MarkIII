@@ -2,6 +2,8 @@
 
 bool testEncoder ();
 
+void spinFlywheel ( int speed );
+
 #warning "LCDStartup"
 void LCDStartup () {
 	string lines[10];
@@ -109,7 +111,7 @@ task LCD () {
 	while(true) {
 		clearLCD();
 		displayLCDCenteredString(0,"62 NBN Mark III");
-		displayLCDString(1,0,"Batts Auton Test");
+		displayLCDString(1,0,"Batts Auton Calift");
 		waitForPress();
 		if(nLCDButtons == 1) {
 			waitForRelease();
@@ -122,8 +124,19 @@ task LCD () {
 			waitForRelease();
 		} else if(nLCDButtons == 4) {
 			waitForRelease();
-			testEncoder();
-			delay(3000);
+			clearLCD();
+			centerLine(0,"Lift Setup");
+			centerLine(1,"4wrd Exit Back");
+			while(nLCDButtons!=LCD_CENTER_BUTTON) {
+				if(nLCDButtons==LCD_LEFT_BUTTON)
+					motor[flywheel4] = 30;
+				else if(nLCDButtons==LCD_RIGHT_BUTTON)
+					motor[flywheel4] = -30;
+				else
+					motor[flywheel4] = 0;
+				delay(50);
+			}
+			waitForRelease();
 		} else if(nLCDButtons == 2) {
 			waitForRelease();
 			int choice = 0;
