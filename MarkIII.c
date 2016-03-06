@@ -166,8 +166,8 @@ task drivePID() {
 		setLeftWheelSpeed(leftOut);
 		setRightWheelSpeed(rightOut);
 		delay(50);
-writeDebugStreamLine("%d",nMotorEncoder(rightWheel13));
-	writeDebugStreamLine("%d",nMotorEncoder(leftWheel13));
+		writeDebugStreamLine("%d",nMotorEncoder(rightWheel13));
+		writeDebugStreamLine("%d",nMotorEncoder(leftWheel13));
 	}	while(true);
 		setWheelSpeed(0);
 }
@@ -186,6 +186,16 @@ void turn (int left, int right) {
 #warning "drive"
 void drive (int target) {
 	turn(target,target);
+}
+
+void sturn (int target, int width) {
+	turn(target/2, target);
+	while(nMotorEncoder(leftWheel13)<leftTarget-20) { delay(25); }
+	turn(target/2,0);
+}
+
+void sturn (int target)
+	sturn(target, 1);
 }
 
 //Logarithmic drivebase control
