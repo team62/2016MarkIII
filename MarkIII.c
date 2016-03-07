@@ -111,9 +111,9 @@ task drivePID() {
 	//float kI = 0.0004;
 	//float kD = 0.15;
 
-	float kP = 0.3;
-	float kI = 0.00;
-	float kD = 0.5;
+	float kP = 0.07;
+	float kI = 0.0;
+	float kD = 0.0;
 
 	float threshold = 10;
 
@@ -154,13 +154,13 @@ task drivePID() {
 		int leftOut = l.kP*l.error + l.kI*l.integral + l.kD*l.derivative;
 		int rightOut = r.kP*r.error + r.kI*r.integral + r.kD*r.derivative;
 
-		leftOut = leftOut>60?60:leftOut;
-		rightOut = rightOut>60?60:rightOut;
+		leftOut = leftOut>127?127:leftOut;
+		rightOut = rightOut>127?127:rightOut;
 
-		leftOut = leftOut<-60?-60:leftOut;
-		rightOut = rightOut<-60?-60:rightOut;
+		leftOut = leftOut<-127?-127:leftOut;
+		rightOut = rightOut<-127?-127:rightOut;
 
-		clearLCD();
+		//clearLCD();
 		//sprintf(debugLeft,"L %d %d %d",leftOut, l.integral, l.error);
 		//sprintf(debugRight,"R %d %d %d",rightOut, r.integral, r.error);
 		//displayLCDString(0,0,debugLeft);
@@ -654,13 +654,18 @@ void pre_auton() {
 }
 
 void autonomous0 () {
-	drive(60,2000);
-	setWheelSpeed(60,0);
+	//startTask(drivePID);
+	//drive(1000);
+	setWheelSpeed(127,70);
 	wait1Msec(1000);
-	drive(60,1000);
-	setWheelSpeed(60,20);
-	wait1Msec(1000);
-	drive(60,1000);
+	setWheelSpeed(0);
+	//wait1Msec(500);
+	//setWheelSpeed(60,-30);
+	//wait1Msec(1000);
+	//drive(60,1000);
+	//setWheelSpeed(60,20);
+	//wait1Msec(1000);
+	//drive(60,1000);
 }
 
 task autonomous () {
