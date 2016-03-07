@@ -35,6 +35,7 @@
 #include "JonLib/Math.h"
 #include "JonLib/Gyro.h"
 #include "JonLib/Drivebase.h"
+#include "autonomous.c"
 
 /*///////////////////////////////////////////////////////////
 /////____________/\\\\\____/\\\\\\\\\_____              /////
@@ -91,121 +92,17 @@ void setRightWheelSpeed ( int speed ) {
 	motor[rightWheel2] = speed;
 }
 
-#warning "drivePID"
-int leftTarget, rightTarget;
-task drivePID() {
-	nMotorEncoder[leftWheel13] = 0;
-	nMotorEncoder[rightWheel13] = 0;
-	pid l;
-	pid r;
-
-	//float kP = 0.018;
-	//float kI = 0.0;
-	//float kD = 0.5;
-
-	//float kP = 0.13;
-	//float kI = 0.0008;
-	//float kD = 0.5;
-
-	//float kP = 0.04//25;
-	//float kI = 0.0004;
-	//float kD = 0.15;
-
-	float kP = 0.3;
-	float kI = 0.00;
-	float kD = 0.5;
-
-	float threshold = 10;
-
-	l.threshold = threshold;
-	r.threshold = threshold;
-
-	l.kP = kP;
-	r.kP = kP;
-
-	l.kI = kI;
-	r.kI = kI;
-
-	l.kD = kD;
-	r.kD = kD;
-
-	string debugLeft, debugRight;
-
-	clearDebugStream();
-	do{
-		l.target = leftTarget;
-		r.target = rightTarget;
-
-		l.error = l.target - nMotorEncoder[leftWheel13]; //add sensor
-		r.error = r.target - nMotorEncoder[rightWheel13]; //same
-
-		l.integral += l.error;
-		r.integral += r.error;
-
-		if(l.error == 0) { l.integral = 0; }
-		if(r.error == 0) { r.integral = 0; }
-
-		l.derivative = l.error - l.lastError;
-		r.derivative = l.error - l.lastError;
-
-		l.lastError = l.error;
-		r.lastError = r.error;
-
-		int leftOut = l.kP*l.error + l.kI*l.integral + l.kD*l.derivative;
-		int rightOut = r.kP*r.error + r.kI*r.integral + r.kD*r.derivative;
-
-		leftOut = leftOut>60?60:leftOut;
-		rightOut = rightOut>60?60:rightOut;
-
-		leftOut = leftOut<-60?-60:leftOut;
-		rightOut = rightOut<-60?-60:rightOut;
-
-		clearLCD();
-		//sprintf(debugLeft,"L %d %d %d",leftOut, l.integral, l.error);
-		//sprintf(debugRight,"R %d %d %d",rightOut, r.integral, r.error);
-		//displayLCDString(0,0,debugLeft);
-		//displayLCDString(1,0,debugRight);
-		//writeDebugStreamLine("%s %s",debugLeft,debugRight);
-
-		setLeftWheelSpeed(leftOut);
-		setRightWheelSpeed(rightOut);
-		delay(50);
-		writeDebugStreamLine("%d",nMotorEncoder(rightWheel13));
-		writeDebugStreamLine("%d",nMotorEncoder(leftWheel13));
-	}	while(true);
-		setWheelSpeed(0);
-}
-
 void clearEncoders () {
 	nMotorEncoder(leftWheel13) = 0;
 	nMotorEncoder(rightWheel13) = 0;
 }
 
-#warning "turn"
-void turn (int left, int right) {
-	leftTarget += left;
-	rightTarget += right;
-}
-
-#warning "drive"
-void drive (int target) {
-	turn(target,target);
-}
 
 void drive(int speed, int time) {
 	setWheelSpeed(speed);
 	wait1Msec(time);
 }
 
-void sturn (int target, int time) {
-	turn(target/2, target);
-	delay(time);
-	turn(target/2,0);
-}
-
-void sturn (int target) {
-	sturn(target, 1);
-}
 
 //Logarithmic drivebase control
 #warning "logDrive"
