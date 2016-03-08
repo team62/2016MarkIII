@@ -75,7 +75,7 @@ bool reverseFlywheelActive = false;
 enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 65, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = 750, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { WAIT_LONG = /*750*/0, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 //Sets the speed of wheels on the left side of the robot
@@ -356,9 +356,6 @@ void startManualFlywheel () {
 int ballIndexerLimit = 2700;
 int velocityLimit = 900;
 int indexerSpeed = 127;
-bool autonIntake = false;
-bool autonShoot = false;
-bool autonIndex = false;
 //controls the intake of the robot
 #warning "intakeControl"
 task intakeControl () {
@@ -558,16 +555,31 @@ void pre_auton() {
 //		delay(50);
 //	}
 //}
+task autonIntake () {
+	while(true) {
+		if(!SensorValue[indexHigh])
+			motor[indexer] = 127;
+		else
+			motor[indexer] = -7;
+		motor[intake] = 127;
+		delay(50);
+	}
+}
 void autonomous0 () {
-	drivePID(-5500);
-	delay(1000);
-	turnPID(-500);
+
+	//sLeftPID(2500,10);
 	//delay(1000);
-	//drivePID(500);
-	//delay(1000);
-	//turnPID(500);
-	//delay(1000);
-	//drivePID(2000);
+	//sRightPID(2500,10);
+	drivePID(5000);
+	delay(200);
+	turnPID(500);
+	startTask(autonIntake);
+	delay(200);
+	drivePID(900);
+	delay(200);
+	turnPID(400);
+	delay(200);
+	drivePID(3000);
 }
 
 task autonomous () {
