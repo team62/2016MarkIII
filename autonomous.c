@@ -1,9 +1,10 @@
 #warning "drivePID"
-pid straight;
-pid angle;
+
 bool drivePID(int distance) {
 	nMotorEncoder[leftWheel13] = 0;
 	nMotorEncoder[rightWheel13] = 0;
+	pid straight;
+	pid angle;
 
 	straight.kP = 0.037;
 	straight.kI = 0.0001;
@@ -13,7 +14,7 @@ bool drivePID(int distance) {
 	angle.kI = 0.0000;
 	angle.kD = 0//.15;
 
-	int timeGuess = 5*distance;//#magic number 5
+	int timeGuess = 2*abs(distance);//#magic number 5
 	clearTimer(T2);
 	angle.target=0;
 	straight.target=distance;
@@ -55,16 +56,16 @@ bool turnPID(int distance) {
 	pid angle;
 
 
-	angle.kP = 0.02;//for
+	angle.kP = 0.2;//for
 	angle.kI = 0.0000;
-	angle.kD = 0//.15;
+	angle.kD = 0.15;
 
-	int timeGuess = 5*distance;//#magic number 5
+	int timeGuess = 5*abs(distance);//#magic number 5
 	clearTimer(T2);
-	angle.target=0;
+	angle.target = distance;
 	do{
 
-	 angle.error=(nMotorEncoder[leftWheel13]-nMotorEncoder[rightWheel13]); //target is 0 so lazy
+	 angle.error=angle.target-(nMotorEncoder[leftWheel13]-nMotorEncoder[rightWheel13]); //target is 0 so lazy
 
 
 		if(angle.error == 0) { angle.integral = 0; }
@@ -77,8 +78,8 @@ bool turnPID(int distance) {
 		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
 
 		clearLCD();
-		setLeftWheelSpeed(-AngleOut);
-		setRightWheelSpeed(+AngleOut);
+		setLeftWheelSpeed(AngleOut);
+		setRightWheelSpeed(-AngleOut);
 		delay(50);
 		if(time1[T2]>timeGuess){ //if something went wrong give up
 			setWheelSpeed(0);

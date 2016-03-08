@@ -377,7 +377,8 @@ task intakeControl () {
 							motor[indexer] = -7;
 							delay(25);
 						}
-						motor[indexer] = 127;
+						if(flywheelVelocity>0)
+							motor[indexer] = 127;
 						clearTimer(T1);
 					}
 					else
@@ -549,24 +550,27 @@ void pre_auton() {
 	init();
 	bStopTasksBetweenModes = true;
 }
-task log() {
-	while(true) {
-		string output;
-		sprintf(output,"E%d,%d\n",straight.error, angle.error);
-		bnsSerialSend(UART1, output);
-		delay(50);
-	}
-}
+//task log() {
+//	while(true) {
+//		string output;
+//		sprintf(output,"E%d,%d\n",straight.error, angle.error);
+//		bnsSerialSend(UART1, output);
+//		delay(50);
+//	}
+//}
 void autonomous0 () {
-	drivePID(5000);
-	turnPID(500);
-	drivePID(1000);
-	turnPID(500);
-	drivePID(3000);
+	drivePID(-5500);
+	delay(1000);
+	turnPID(-500);
+	//delay(1000);
+	//drivePID(500);
+	//delay(1000);
+	//turnPID(500);
+	//delay(1000);
+	//drivePID(2000);
 }
 
 task autonomous () {
-	startTask(log);
 	autonomous0():
 }
 
