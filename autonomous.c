@@ -1,17 +1,17 @@
 #warning "drivePID"
+pid straight;
+pid angle;
 bool drivePID(int distance) {
 	nMotorEncoder[leftWheel13] = 0;
 	nMotorEncoder[rightWheel13] = 0;
-	pid straight;
-	pid angle;
 
-	straight.kP = 0.1;
-	straight.kI = 0.00;
-	straight.kD = 0.0;
+	straight.kP = 0.037;
+	straight.kI = 0.0001;
+	straight.kD = 0.04;
 
-	angle.kP = 0;//for
-	angle.kI =0;
-	angle.kD =0;
+	angle.kP = 0.02;//for
+	angle.kI = 0.0000;
+	angle.kD = 0//.15;
 
 	int timeGuess = 5*distance;//#magic number 5
 	clearTimer(T2);
@@ -35,16 +35,13 @@ bool drivePID(int distance) {
 		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
 
 		clearLCD();
-		setLeftWheelSpeed(StraightOut-AngleOut);
-		setRightWheelSpeed(StraightOut+AngleOut);
+		setLeftWheelSpeed(StraightOut+AngleOut);
+		setRightWheelSpeed(StraightOut-AngleOut);
 		delay(50);
 		if(time1[T2]>timeGuess){ //if something went wrong give up
 			setWheelSpeed(0);
 			return false;
 		}
-		string output;
-		sprintf(output,"E%d%d\n",straight.error, angle.error);
-		bnsSerialSend(UART2, output);
 	}	while(abs(straight.error)>30 || abs(straight.lastError)>30);
 	setWheelSpeed(0);
 	return true;
@@ -58,9 +55,9 @@ bool turnPID(int distance) {
 	pid angle;
 
 
-	angle.kP = 0.5;//for
-	angle.kp = 0.00;
-	angle.kp= 0.3;
+	angle.kP = 0.02;//for
+	angle.kI = 0.0000;
+	angle.kD = 0//.15;
 
 	int timeGuess = 5*distance;//#magic number 5
 	clearTimer(T2);

@@ -549,12 +549,24 @@ void pre_auton() {
 	init();
 	bStopTasksBetweenModes = true;
 }
-
+task log() {
+	while(true) {
+		string output;
+		sprintf(output,"E%d,%d\n",straight.error, angle.error);
+		bnsSerialSend(UART1, output);
+		delay(50);
+	}
+}
 void autonomous0 () {
-	drivePID(2000);
+	drivePID(5000);
+	turnPID(500);
+	drivePID(1000);
+	turnPID(500);
+	drivePID(3000);
 }
 
 task autonomous () {
+	startTask(log);
 	autonomous0():
 }
 
