@@ -43,7 +43,7 @@ bool drivePID(int distance) {
 			return false;
 		}
 		string output;
-		sprintf(output,"E%d%d",straight.error, angle.error);
+		sprintf(output,"E%d%d\n",straight.error, angle.error);
 		bnsSerialSend(UART2, output);
 	}	while(abs(straight.error)>30 || abs(straight.lastError)>30);
 	setWheelSpeed(0);
