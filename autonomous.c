@@ -5,11 +5,11 @@ bool drivePID(int distance) {
 	pid straight;
 	pid angle;
 
-	straight.kP = 0.3;
+	straight.kP = 0.1;
 	straight.kI = 0.00;
-	straight.kD = 0.5;
+	straight.kD = 0.0;
 
-	angle.kP = 0.5;//for
+	angle.kP = 0;//for
 	angle.kI =0;
 	angle.kD =0;
 
@@ -38,11 +38,15 @@ bool drivePID(int distance) {
 		setLeftWheelSpeed(StraightOut-AngleOut);
 		setRightWheelSpeed(StraightOut+AngleOut);
 		delay(50);
-		if(timer1[T2]>timeGuess){ //if something went wrong give up
+		if(time1[T2]>timeGuess){ //if something went wrong give up
 			setWheelSpeed(0);
 			return false;
 		}
-	}	while(abs(straight.error)>30);
+		string output;
+		sprintf(output,"E%d%d",straight.error, angle.error);
+		bnsSerialSend(UART2, output);
+	}	while(abs(straight.error)>30 || abs(straight.lastError)>30);
+	setWheelSpeed(0);
 	return true;
 }
 
@@ -79,11 +83,12 @@ bool turnPID(int distance) {
 		setLeftWheelSpeed(-AngleOut);
 		setRightWheelSpeed(+AngleOut);
 		delay(50);
-		if(timer1[T2]>timeGuess){ //if something went wrong give up
+		if(time1[T2]>timeGuess){ //if something went wrong give up
 			setWheelSpeed(0);
 			return false;
 		}
-	}	while(abs(straight.error)>30);
-return true;
+	}	while(abs(angle.error)>30 || abs(angle.lastError)>30);
+	setWheelSpeed(0);
+	return true;
 
 }

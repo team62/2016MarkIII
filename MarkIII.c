@@ -30,11 +30,14 @@
 
 #pragma systemFile
 
+int autonomousChoice=0;
+
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 #include "JonLib/PID.h"
 #include "JonLib/Math.h"
 #include "JonLib/Gyro.h"
 #include "JonLib/Drivebase.h"
+#include "LCD.c"
 #include "autonomous.c"
 
 /*///////////////////////////////////////////////////////////
@@ -67,9 +70,6 @@ bool encoderTestMode = false; //checks encoders at runtime
 int waitTime = 0;
 
 bool reverseFlywheelActive = false;
-
-int autonomousChoice = 0;
-#include "LCD.c"
 
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
@@ -551,13 +551,7 @@ void pre_auton() {
 }
 
 void autonomous0 () {
-	drive(60,2000);
-	setWheelSpeed(60,0);
-	wait1Msec(1000);
-	drive(60,1000);
-	setWheelSpeed(60,20);
-	wait1Msec(1000);
-	drive(60,1000);
+	drivePID(2000);
 }
 
 task autonomous () {
@@ -571,10 +565,6 @@ task usercontrol() {
 	startTask(intakeControl);
 
 	while (true) {
-		if(vexRT(Btn6D)) {
-			//playSound(soundUpwardTones);
-			playSoundFile("noneed.wav");
-		}
 
 		if(vexRT(Btn7L)) {
 			if(getFlywheelVelocity()>10) {
