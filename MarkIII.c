@@ -73,7 +73,7 @@ bool reverseFlywheelActive = false;
 
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
-enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
+enum { HIGH_SPEED_LONG = 100, HIGH_SPEED_MID = 100, HIGH_SPEED_PIPE = 100, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 65, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 enum { WAIT_LONG = /*750*/0, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
@@ -152,30 +152,15 @@ int velocities[5];
 //used to calculate flywheel velocity
 //TODO consider revising after 23/1/16
 long lastdt=nSysTime;
-#warning "flywheelVelocity"
-task flywheelVelocity(){
-	int nextIndex=0;
+#warning "flywheelVelocityMonitor"
+task flywheelVelocityMonitor(){
 	while(true){
 		long tme=nSysTime;
-		velocities[nextIndex]=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)==0?1:(float)(tme-lastdt)/(float)60)/1000);
-		//velocities[nextIndex]=getMotorVelocity(flywheel4);
+		currentVelocity=(((float)-SensorValue[flywheelEncoder])/360)/(((float)(tme-lastdt)==0?1:(float)(tme-lastdt)/(float)60)/1000);
 		SensorValue[flywheelEncoder]=0;
-		nextIndex++;
-		if(nextIndex==5)
-			nextIndex=0;
 		lastdt=tme;
 		delay(5);
 	}
-}
-
-//Returns the velocity of the flywheel
-//TODO consider revising after 23/1/16
-#warning "getFlywheelVelocity"
-int getFlywheelVelocity(){
-	int sum=0;
-	for(int i=0;i<5;i++)
-		sum = sum + velocities[i];
-	return sum/5;
 }
 
 bool flywheelOn = false;
@@ -200,7 +185,6 @@ task flywheelControl(){
 		//		kP=2.05;//2.2 for NON AUTO - 1.5 for auto
 		//	else
 		//		kP=2.0;
-		currentVelocity = getFlywheelVelocity();//might need work
 		error = (currentGoalVelocity - currentVelocity);
 		integral = integral + error;
 		derivative = error-lastError;
@@ -243,7 +227,7 @@ task abi() {
 		else
 			kP = 0.09;
 		veloA = currentGoalVelocity;
-		currVelo = getFlywheelVelocity();
+		currVelo = currentVelocity;
 
 		motorSpeedA = speedA + (veloA-currVelo) * kP;
 		motorSpeedB = speedB + (veloA-currVelo) * kP;
@@ -313,7 +297,7 @@ bool autoIntake = false;
 void startAutoFlywheel (int targetVelocity) {
 	setrpm = targetVelocity;
 	currentGoalVelocity = targetVelocity;
-	while(getFlywheelVelocity()<-30) { delay(50); }
+	while(currentVelocity<-30) { delay(50); }
 	//startFlywheel(targetVelocity);							//NEEDS TESTING
 	//startTask(drunkFlywheelControl);
 	startTask(abi);
@@ -368,13 +352,13 @@ task intakeControl () {
 
 			while (vexRT(Btn5U)) {
 				if(vexRT(Btn6U)) {
-					//if(sensorValue[indexHigh] && flywheelVelocity<currentGoalVelocity+30) {
+					//if(sensorValue[indexHigh] && currentVelocity<currentGoalVelocity+30) {
 					if(sensorValue[indexHigh] && waitTime!=0) {
 						while(time1[T1]<waitTime) {
 							motor[indexer] = -7;
 							delay(25);
 						}
-						if(flywheelVelocity>0)
+						if(currentVelocity>0)
 							motor[indexer] = 127;
 						clearTimer(T1);
 					}
@@ -482,7 +466,7 @@ task autonAlign () {
 }
 
 void checkFlywheelStopped () {
-	while(abs(getFlywheelVelocity())>25) {
+	while(abs(currentVelocity)>25) {
 		delay(50);
 	}
 }
@@ -490,7 +474,7 @@ void checkFlywheelStopped () {
 #warning "reverseFlywheel"
 task reverseFlywheel () {
 	playSound(soundException);
-	if(getFlywheelVelocity()>0){
+	if(currentVelocity>0){
 		startTask(stopFlywheel);
 		checkFlywheelStopped();
 	}
@@ -500,7 +484,7 @@ task reverseFlywheel () {
 
 void reverseFlywheelControl() {
 	if(vexRT(Btn7L)){
-		if(getFlywheelVelocity()>0) {
+		if(currentVelocity>0) {
 			startTask(reverseFlywheel);
 		}
 	} else if(reverseFlywheelActive) {
@@ -517,7 +501,7 @@ void reverseFlywheelControl() {
 void init() {
 	playTone(700,10);
 	startTask(LCD);
-	startTask(flywheelVelocity);
+	startTask(flywheelVelocityMonitor);
 
 	setBaudRate(UART1, baudRate57600);
 
@@ -595,9 +579,9 @@ task usercontrol() {
 	while (true) {
 
 		if(vexRT(Btn7L)) {
-			if(getFlywheelVelocity()>10) {
+			if(currentVelocity>10) {
 				startTask(stopFlywheel);
-				while(VexRT(Btn7L) && getFlywheelVelocity()>10) { delay(25); }
+				while(VexRT(Btn7L) && currentVelocity>10) { delay(25); }
 			} else {
 				motor[flywheel4] = -127;
 				while(vexRT(Btn7L)) { delay(25); }
