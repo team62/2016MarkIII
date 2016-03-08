@@ -16,3 +16,14 @@ void setWheelSpeed ( int wheelSpeed = 127 ) {
 void spin ( int wheelSpeed = 127 ) {
 	setWheelSpeed(-wheelSpeed, wheelSpeed);
 }
+
+void timeDrive(int speed, int time) {
+	setWheelSpeed(speed);
+	wait1Msec(time);
+}
+
+void timeDrive(int speed, int time, bool stop) {
+	timeDrive(speed, time);
+	if(stop) 
+		setWheelSpeed(0);
+}

@@ -67,10 +67,6 @@ bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
-int waitTime = 0;
-
-bool reverseFlywheelActive = false;
-
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 100, HIGH_SPEED_MID = 100, HIGH_SPEED_PIPE = 100, HIGH_SPEED_HOLD = 90 };
@@ -97,32 +93,12 @@ void clearEncoders () {
 	nMotorEncoder(rightWheel13) = 0;
 }
 
-
-void drive(int speed, int time) {
-	setWheelSpeed(speed);
-	wait1Msec(time);
-}
-
-
 //Logarithmic drivebase control
 #warning "logDrive"
 void logDrive () {
-	int rawLeft, rawRight, outLeft, outRight;
-	rawLeft = vexRT(Ch3);
-	rawRight = vexRT(Ch2);
-
-	outLeft = rawLeft*rawLeft/127;
-	outRight = rawRight*rawRight/127;
-
-	//outLeft = outleft*outLeft/127;
-	//outRight = outRight*outRight/127;
-
-	if(rawLeft<0)
-		outLeft*=-1;
-	if(rawRight<0)
-		outRight*=-1;
-
-	setWheelSpeed(outLeft,outRight);
+	setWheelSpeed(
+		abs(vexRT(Ch3))*vexRT(Ch3)/127,
+		abs(vexRT(Ch3))*vexRT(Ch3)/127);
 }
 
 //Tank drive control for drivebase
@@ -146,7 +122,6 @@ float lastError=0;
 float integral=0;
 float derivative=0;
 int output;
-int velocities[5];
 
 //Populates an array with the most recent velocities of the flywheel,
 //used to calculate flywheel velocity
@@ -465,35 +440,18 @@ task autonAlign () {
 	}
 }
 
-void checkFlywheelStopped () {
-	while(abs(currentVelocity)>25) {
-		delay(50);
-	}
-}
-
 #warning "reverseFlywheel"
-task reverseFlywheel () {
-	playSound(soundException);
-	if(currentVelocity>0){
-		startTask(stopFlywheel);
-		checkFlywheelStopped();
-	}
-	while(vexRT(Btn7L))
-		motor[flywheel4] = -50;
-}
-
-void reverseFlywheelControl() {
-	if(vexRT(Btn7L)){
-		if(currentVelocity>0) {
-			startTask(reverseFlywheel);
+void reverseFlywheel() {
+	if(vexRT(Btn7L)) {
+		if(currentVelocity>10) {
+			startTask(stopFlywheel);
+			while(VexRT(Btn7L) && currentVelocity>10) { delay(25); }
+		} else {
+			motor[flywheel4] = -127;
+			while(vexRT(Btn7L)) { delay(25); }
+			while(motor[flywheel4]<0) { motor[flywheel4]+=2; delay(25); }
+			motor[flywheel4] = 0;
 		}
-	} else if(reverseFlywheelActive) {
-		stopTask(reverseFlywheel);
-		while(motor[flywheel4]<0) {
-			motor[flywheel4]+=1;
-			delay(25);
-		}
-		motor[flywheel4] = 0;
 	}
 }
 
@@ -572,23 +530,9 @@ task autonomous () {
 
 task usercontrol() {
 
-
-	//Start Tasks
 	startTask(intakeControl);
 
 	while (true) {
-
-		if(vexRT(Btn7L)) {
-			if(currentVelocity>10) {
-				startTask(stopFlywheel);
-				while(VexRT(Btn7L) && currentVelocity>10) { delay(25); }
-			} else {
-				motor[flywheel4] = -127;
-				while(vexRT(Btn7L)) { delay(25); }
-				while(motor[flywheel4]<0) { motor[flywheel4]+=2; delay(25); }
-				motor[flywheel4] = 0;
-			}
-		}
 
 		else if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE, WAIT_PIPE);
@@ -612,16 +556,10 @@ task usercontrol() {
 			startTask(orient);
 		else {
 			stopTask(orient);
-			logDrive();
+
+		logDrive();
+		reverseFlwheel();
+
 		}
-		string text;
-		sprintf(text, "%d", SensorValue[indexHigh]);
-		line(1,text);
-		//if(nImmediateBatteryLevel/1000.0>7.5 && alarm == false)
-		//	startTask(lowBattery);
-		//else {
-		//	stopTask(lowBattery);
-		//	alarm = false;
-		//}
 	}
 }
