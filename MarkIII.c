@@ -67,9 +67,11 @@ bool tuneMode = false; //acts like you're holding 5U and 6U
 bool debugMode = false; //prints to console
 bool encoderTestMode = false; //checks encoders at runtime
 
+int waitTime = 0;
+
 //Stores the differient speeds for the velocity states of the robot
 enum { VELOCITY_LONG = 850, VELOCITY_MID = 760, VELOCITY_PIPE = 700, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
-enum { HIGH_SPEED_LONG = 100, HIGH_SPEED_MID = 100, HIGH_SPEED_PIPE = 100, HIGH_SPEED_HOLD = 90 };
+enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 65, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 50, LOW_SPEED_HOLD = 45 };
 enum { WAIT_LONG = /*750*/0, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
@@ -97,8 +99,8 @@ void clearEncoders () {
 #warning "logDrive"
 void logDrive () {
 	setWheelSpeed(
-		abs(vexRT(Ch3))*vexRT(Ch3)/127,
-		abs(vexRT(Ch3))*vexRT(Ch3)/127);
+	abs(vexRT(Ch3))*vexRT(Ch3)/127,
+	(abs(vexRT(Ch2))*vexRT(Ch2)/127)>100?100:abs(vexRT(Ch2))*vexRT(Ch2)/127);
 }
 
 //Tank drive control for drivebase
@@ -197,17 +199,14 @@ task abi() {
 	}
 	int motorSpeedA, motorSpeedB;
 	while(true) {
-		if(currentGoalVelocity == VELOCITY_LONG)
-			kP = 0.1;
-		else
-			kP = 0.09;
+		kP = 0.1;
 		veloA = currentGoalVelocity;
 		currVelo = currentVelocity;
 
 		motorSpeedA = speedA + (veloA-currVelo) * kP;
 		motorSpeedB = speedB + (veloA-currVelo) * kP;
 
-		motorSpeedA = motorSpeedA>127?127:motorSpeedA;
+		motorSpeedA = motorSpeedA>100?100:motorSpeedA;
 
 		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
@@ -534,7 +533,7 @@ task usercontrol() {
 
 	while (true) {
 
-		else if(vexRT(Btn8R))
+		if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE, WAIT_PIPE);
 
 		else if(vexRT(Btn8U))

@@ -9,9 +9,9 @@
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Sensor, I2C_2,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           rightWheel2,   tmotorVex393TurboSpeed_HBridge, openLoop, reversed)
-#pragma config(Motor,  port2,           flywheel4,     tmotorVex393TurboSpeed_MC29, openLoop, reversed)
+#pragma config(Motor,  port2,           flywheel4,     tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port3,           rightWheel13,  tmotorVex393TurboSpeed_MC29, openLoop, reversed, encoderPort, I2C_1)
-#pragma config(Motor,  port4,           flywheel3,     tmotorVex393HighSpeed_MC29, openLoop)
+#pragma config(Motor,  port4,           flywheel3,     tmotorVex393HighSpeed_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           leftWheel2,    tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port6,           flywheel1,     tmotorVex393HighSpeed_MC29, openLoop)
 #pragma config(Motor,  port7,           flywheel2,     tmotorVex393HighSpeed_MC29, openLoop, reversed)
@@ -74,10 +74,10 @@ task usercontrol() {
 			motor(flywheel4) = -127;
 		}
 		else if(vexRT(Btn7D)){
-			motor(flywheel1) = 70;
-			motor(flywheel2) = 70;
-			motor(flywheel3) = 70;
-			motor(flywheel4) = 70;
+			motor(flywheel1) = 100;
+			motor(flywheel2) = 100;
+			motor(flywheel3) = 100;
+			motor(flywheel4) = 100;
 		}
 		else{
 			motor(flywheel1) = 0;
