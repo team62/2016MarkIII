@@ -206,7 +206,7 @@ task abi() {
 		motorSpeedA = speedA + (veloA-currVelo) * kP;
 		motorSpeedB = speedB + (veloA-currVelo) * kP;
 
-		motorSpeedA = motorSpeedA>100?100:motorSpeedA;
+		motorSpeedA = motorSpeedA>127?127:motorSpeedA;
 
 		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
