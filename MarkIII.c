@@ -525,20 +525,29 @@ task autonIntake () {
 	}
 }
 void autonomous0 () {
-
-	//sLeftPID(2500,10);
-	//delay(1000);
-	//sRightPID(2500,10);
-	drivePID(5000);
-	delay(200);
-	turnPID(500);
 	startTask(autonIntake);
+	setWheelSpeed(75,100);
+	wait1Msec(800);
+	setWheelSpeed(100,75);
+	wait1Msec(800);
+	setWheelSpeed(80);
+	wait1Msec(500);//distance to pipe
+	setWheelSpeed(0);
+	delay(1000);
+	stopTask(autonIntake);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	drivePID(-450);
 	delay(200);
-	drivePID(900);
+	turnPID(360);
 	delay(200);
-	turnPID(400);
+	drivePID(1250);
 	delay(200);
-	drivePID(3000);
+	turnPID(360);
+	motor[indexer] = -127;
+	motor[intake] = -127;
+	delay(200);
+	drivePID(2000);
 }
 
 task autonomous () {
