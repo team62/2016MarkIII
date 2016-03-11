@@ -71,10 +71,10 @@ bool encoderTestMode = false; //checks encoders at runtime
 int waitTime = 0;
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 830, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 800, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 45, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = /*750*/0, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { WAIT_LONG = 750, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 //Sets the speed of wheels on the left side of the robot
@@ -356,7 +356,7 @@ task intakeControl () {
 					}
 					else
 						motor[indexer] = 127;
-					delay(100);
+					delay(50);
 				} else if(vexRT(Btn6D)) {
 					motor[indexer] = -127;
 					delay(250);
@@ -524,7 +524,8 @@ task autonIntake () {
 		delay(50);
 	}
 }
-void autonomous0 () {
+
+void autonomousRed() {
 	startTask(autonIntake);
 	setWheelSpeed(75,100);
 	wait1Msec(800);
@@ -533,25 +534,49 @@ void autonomous0 () {
 	setWheelSpeed(80);
 	wait1Msec(500);//distance to pipe
 	setWheelSpeed(0);
-	delay(1000);
-	stopTask(autonIntake);
-	motor[intake] = 0;
-	motor[indexer] = 0;
+	delay(800)
 	drivePID(-450);
 	delay(200);
 	turnPID(360);
-	delay(200);
+	stopTask(autonIntake);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	delay(100);
 	drivePID(1250);
-	delay(200);
-	turnPID(360);
+	delay(100);
+	turnPID(320);
 	motor[indexer] = -127;
 	motor[intake] = -127;
+	drivePID(2000);
+}
+
+void autonomousBlue() {
+	startTask(autonIntake);
+	setWheelSpeed(100,80);
+	wait1Msec(800);
+	setWheelSpeed(80,100);
+	wait1Msec(800);
+	setWheelSpeed(80);
+	wait1Msec(500);//distance to pipe
+	setWheelSpeed(0);
+	delay(800)
+	drivePID(-450);
 	delay(200);
+	turnPID(-380);
+	stopTask(autonIntake);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	delay(100);
+	drivePID(1250);
+	delay(100);
+	turnPID(-375);
+	motor[indexer] = -127;
+	motor[intake] = -127;
 	drivePID(2000);
 }
 
 task autonomous () {
-	autonomous0():
+	autonomousBlue():
 }
 
 task usercontrol() {
