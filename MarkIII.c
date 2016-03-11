@@ -606,41 +606,30 @@ void autnomous1Red() {
 }
 
 void autonomous2Red () {
-	startTask(startAutoFlywheel(VELOCITY_HOLD, HIGH_SPEED_HOLD, LOW_SPEED_HOLD, WAIT_HOLD));
 	autonIndex = true;
 	autonShoot = true;
 	autonIntake = true;
 	startTask(intakeControl);
-	drivePID(700);
-	delay(200);
-	setWheelSpeed(0,-80);
-	delay(600);
-	startTask(stopFlywheel);
-	setWheelSpeed(-40,-40);
-	delay(200);
+	setWheelSpeed(75,100);
+	wait1Msec(800);
+	setWheelSpeed(100,75);
+	wait1Msec(800);
 	setWheelSpeed(0);
-	delay(200);
-	autonShoot = false;
-	drivePID(500);
+	drivePID(-1000);
 }
 
 void autonomous2Red () {
-	startTask(startAutoFlywheel(VELOCITY_HOLD, HIGH_SPEED_HOLD, LOW_SPEED_HOLD, WAIT_HOLD));
 	autonIndex = true;
 	autonShoot = true;
 	autonIntake = true;
 	startTask(intakeControl);
-	drivePID(700);
-	delay(200);
-	setWheelSpeed(-80,0);
-	delay(600);
-	startTask(stopFlywheel);
-	setWheelSpeed(-40,-40);
-	delay(200);
+	setWheelSpeed(100,80);
+	wait1Msec(800);
+	setWheelSpeed(80,100);
+	wait1Msec(800);
 	setWheelSpeed(0);
-	delay(200);
-	autonShoot = false;
-	drivePID(500);
+	wait1Msec(700);
+	drivePID(-1000);
 }
 
 /**
