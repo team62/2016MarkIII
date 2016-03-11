@@ -350,10 +350,11 @@ task intakeControl () {
 							motor[indexer] = -7;
 							delay(25);
 						}
-						if(getFlywheelVelocity()>0)
+						if(getFlywheelVelocity()>0) {
 							motor[indexer] = 127;
-						while(SensorValue[indexHigh]) { delay(5); }
-						clearTimer(T1);
+							while(SensorValue[indexHigh] && vexRT(Btn6U)) { delay(5); }
+							clearTimer(T1);
+						}
 					}
 					else
 						motor[indexer] = 127;
