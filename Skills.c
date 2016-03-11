@@ -533,11 +533,6 @@ task autonIntake () {
 	}
 }
 
-/**
-*	autonomous 0 - u shaped s curve ram balls into our goal and then turn around and shove some to us
-* autonomous 1 - 4 ball auton
-* autonomous 2 - get 2 close stax
-**/
 task autonomous () {
 	startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE, WAIT_PIPE);
 	startTask(intakeControl);
