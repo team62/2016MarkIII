@@ -71,10 +71,10 @@ bool encoderTestMode = false; //checks encoders at runtime
 int waitTime = 0;
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 800, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 810, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 45, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = 750, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { WAIT_LONG = 400, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 //Sets the speed of wheels on the left side of the robot
@@ -227,7 +227,7 @@ task abi() {
 
 		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
-		if(currVelo < veloA+50) {
+		if(currVelo < (veloA==VELOCITY_LONG?veloA+50:veloA+50)) {
 			motor[flywheel4] = motorSpeedA;
 		} else {
 			motor[flywheel4] = motorSpeedB;
@@ -352,6 +352,7 @@ task intakeControl () {
 						}
 						if(getFlywheelVelocity()>0)
 							motor[indexer] = 127;
+						while(SensorValue[indexHigh]) { delay(5); }
 						clearTimer(T1);
 					}
 					else
