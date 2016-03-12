@@ -548,13 +548,8 @@ void autonomous0Right() {
 	setWheelSpeed(80);
 	wait1Msec(500);//distance to pipe
 	setWheelSpeed(0);
-<<<<<<< HEAD
 	delay(800)
 	drivePID(-380);
-=======
-	delay(800);
-	drivePID(-450);
->>>>>>> origin/master
 	delay(200);
 	turnPID(360);
 	stopTask(autonomousIntake);
@@ -569,11 +564,7 @@ void autonomous0Right() {
 	drivePID(2000);
 }
 
-<<<<<<< HEAD
 void autonomous0Left() {
-=======
-void autonomous0Blue() {
->>>>>>> origin/master
 	startTask(autonomousIntake);
 	setWheelSpeed(100,80);
 	wait1Msec(800);
@@ -673,11 +664,33 @@ void autonomous3Right () {
 	turnPID(-600);
 	wait1Msec(200);
 	drivePID(2300);
-
 }
 
 void autonomous3Left() {
-	//autonomous3();
+	motor[intake] = 127;
+	motor[indexer] = 127;
+	startAutoFlywheel(350, HIGH_SPEED_HOLD, LOW_SPEED_HOLD, WAIT_HOLD);
+	setWheelSpeed(45);
+	wait1Msec(1300);
+	setWheelSpeed(0);
+	wait1Msec(2000);
+	autonIndex = true;
+	autonShoot = false;
+	autonIntake = true;
+	startTask(stopFlywheel);
+	startTask(intakeControl);
+	turnPID(500);
+	drivePID(1000);
+	stopTask(intakeControl);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	turnPID(270);
+	motor[intake] = -127;
+	motor[indexer] = -127;
+	wait1Msec(1000);
+	turnPID(600);
+	wait1Msec(200);
+	drivePID(2300);
 }
 
 /**
@@ -687,11 +700,7 @@ void autonomous3Left() {
 *	autonomous 3 - shoot out back
 **/
 task autonomous () {
-<<<<<<< HEAD
 	autonomous1():
-=======
-	autonomous0Blue();
->>>>>>> origin/master
 }
 
 task usercontrol() {
