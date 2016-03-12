@@ -1,3 +1,5 @@
+#pragma systemFile            	// eliminates warning for "unreferenced" functions
+
 #warning "drivePID"
 
 bool drivePID(int distance) {
@@ -12,7 +14,7 @@ bool drivePID(int distance) {
 
 	angle.kP = 0.02;//for
 	angle.kI = 0.0000;
-	angle.kD = 0//.15;
+	angle.kD = 0;  //.15;
 
 	int timeGuess = 3*abs(distance);//#magic number 5
 	clearTimer(T2);
@@ -61,7 +63,7 @@ bool sTurnPID(int distance, int coefficient) {
 
 	angle.kP = 0.02;//for
 	angle.kI = 0.0000;
-	angle.kD = 0//.15;
+	angle.kD = 0;//.15;
 
 	int timeGuess = 3*abs(distance);//#magic number 5
 	clearTimer(T2);

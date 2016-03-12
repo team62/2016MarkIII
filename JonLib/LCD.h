@@ -1,3 +1,4 @@
+#pragma systemFile            	// eliminates warning for "unreferenced" functions
 enum { 	LCD_NO_BUTTONS = 0,
 				LCD_LEFT_BUTTON = 1,
 				LCD_CENTRE_BUTTON = 2, LCD_CENTER_BUTTON = 2,

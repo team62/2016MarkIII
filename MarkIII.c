@@ -28,9 +28,7 @@
 #pragma competitionControl(Competition)
 #pragma autonomousDuration(0)
 #pragma userControlDuration(60)
-
-#pragma systemFile
-
+#pragma systemFile            	// eliminates warning for "unreferenced" functions
 int autonomousChoice=0;
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
@@ -168,7 +166,7 @@ task flywheelControl(){
 	flywheelOn = true;
 	clearDebugStream();
 
-	float kP=2.1//2.2;//was 1.675
+	float kP=2.1;  //2.2;//was 1.675
 	float kI=0.005;//1//07;//was 0.0025
 	float kD=0.0;
 	//float kP=3.0;//was 1.675
@@ -349,7 +347,7 @@ task intakeControl () {
 			while (vexRT(Btn5U) || autonIntake) {
 				if(vexRT(Btn6U) || autonShoot) {
 					//if(sensorValue[indexHigh] && getFlywheelVelocity()<currentGoalVelocity+30) {
-					if(sensorValue[indexHigh]) {
+					if(SensorValue[indexHigh]) {
 						while(time1[T1]<=waitTime) {
 							motor[indexer] = -7;
 							delay(25);
@@ -546,11 +544,11 @@ void autonomous0Red() {
 	setWheelSpeed(80);
 	wait1Msec(500);//distance to pipe
 	setWheelSpeed(0);
-	delay(800)
+	delay(800);
 	drivePID(-450);
 	delay(200);
 	turnPID(360);
-	stopTask(autonIntake);
+	stopTask(autonomousIntake);
 	motor[intake] = 0;
 	motor[indexer] = 0;
 	delay(100);
@@ -563,7 +561,7 @@ void autonomous0Red() {
 }
 
 void autonomous0Blue() {
-	startTask(autonIntake);
+	startTask(autonomousIntake);
 	setWheelSpeed(100,80);
 	wait1Msec(800);
 	setWheelSpeed(80,100);
@@ -571,11 +569,11 @@ void autonomous0Blue() {
 	setWheelSpeed(80);
 	wait1Msec(500);//distance to pipe
 	setWheelSpeed(0);
-	delay(800)
+	delay(800);
 	drivePID(-450);
 	delay(200);
 	turnPID(-380);
-	stopTask(autonIntake);
+	stopTask(autonomousIntake);
 	motor[intake] = 0;
 	motor[indexer] = 0;
 	delay(100);
@@ -642,7 +640,7 @@ void autonomous2Red () {
 * autonomous 2 - get 2 close stax
 **/
 task autonomous () {
-	autonomous0Blue():
+	autonomous0Blue();
 }
 
 task usercontrol() {
