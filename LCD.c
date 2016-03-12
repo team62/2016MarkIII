@@ -116,8 +116,8 @@ task LCD () {
 		if(nLCDButtons == 1) {
 			waitForRelease();
 			clearLCD();
-			sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0)
-			sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0)
+			sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0);
+			sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0);
 			displayLCDString(0, 0, mainBatteryStatus);
 			displayLCDString(1, 0, backupBatteryStatus);
 			waitForPress();
