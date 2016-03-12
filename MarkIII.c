@@ -71,9 +71,9 @@ bool encoderTestMode = false; //checks encoders at runtime
 int waitTime = 0;
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 810, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 810, VELOCITY_MID = 640, VELOCITY_PIPE = 530, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
-enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 45, LOW_SPEED_HOLD = 45 };
+enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 45, LOW_SPEED_PIPE = 40, LOW_SPEED_HOLD = 45 };
 enum { WAIT_LONG = 400, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
@@ -349,8 +349,8 @@ task intakeControl () {
 			while (vexRT(Btn5U) || autonIntake) {
 				if(vexRT(Btn6U) || autonShoot) {
 					//if(sensorValue[indexHigh] && getFlywheelVelocity()<currentGoalVelocity+30) {
-					if(sensorValue[indexHigh] && waitTime!=0) {
-						while(time1[T1]<waitTime) {
+					if(sensorValue[indexHigh]) {
+						while(time1[T1]<=waitTime) {
 							motor[indexer] = -7;
 							delay(25);
 						}
@@ -359,9 +359,13 @@ task intakeControl () {
 							while(SensorValue[indexHigh] && (vexRT(Btn6U) || autonShoot)) { delay(5); }
 							clearTimer(T1);
 						}
+						else {
+							motor[indexer] = -7;
+						}
 					}
-					else
+					else {
 						motor[indexer] = 127;
+					}
 					delay(50);
 				} else if(vexRT(Btn6D)) {
 					motor[indexer] = -127;
@@ -522,7 +526,7 @@ void pre_auton() {
 //	}
 //}
 
-task autonIntake () {
+task autonomousIntake () {
 	while(true) {
 		if(!SensorValue[indexHigh])
 			motor[indexer] = 127;
@@ -534,7 +538,7 @@ task autonIntake () {
 }
 
 void autonomous0Red() {
-	startTask(autonIntake);
+	startTask(autonomousIntake);
 	setWheelSpeed(75,100);
 	wait1Msec(800);
 	setWheelSpeed(100,75);
@@ -647,10 +651,10 @@ task usercontrol() {
 
 	while (true) {
 
-		if(vexRT(Btn8R))
+		if(vexRT(Btn8U))
 			startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE, WAIT_PIPE);
 
-		else if(vexRT(Btn8U))
+		else if(vexRT(Btn8R))
 			startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID, WAIT_MID);
 
 		else if(vexRT(Btn8L))
