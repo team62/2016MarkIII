@@ -71,10 +71,10 @@ bool encoderTestMode = false; //checks encoders at runtime
 int waitTime = 0;
 
 //Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG = 810, VELOCITY_MID = 760, VELOCITY_PIPE = 640, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
+enum { VELOCITY_LONG = 810, VELOCITY_MID = 640, VELOCITY_PIPE = 530, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
-enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 60, LOW_SPEED_PIPE = 45, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = 400, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 45, LOW_SPEED_PIPE = 40, LOW_SPEED_HOLD = 45 };
+enum { WAIT_LONG = 480, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 bool autonIntake = false;
@@ -366,7 +366,7 @@ task intakeControl () {
 				} else if(vexRT(Btn6D)) {
 					motor[indexer] = -127;
 					delay(250);
-				} else if(SensorValue[indexLow] || SensorValue[indexHigh]) {
+				} else if(SensorValue[indexHigh]) {
 					motor[indexer] = -7;
 				} else {
 					motor[indexer] = (vexRT(Btn5U)-vexRT(Btn5D))*127;
@@ -522,7 +522,7 @@ void pre_auton() {
 //	}
 //}
 
-task autonIntake () {
+task autonomousIntake () {
 	while(true) {
 		if(!SensorValue[indexHigh])
 			motor[indexer] = 127;
@@ -532,26 +532,43 @@ task autonIntake () {
 		delay(50);
 	}
 }
-
+task autonomousDriveAcross () {
+	drivePID(4500);
+}
 task autonomous () {
-	startAutoFlywheel(VELOCITY_PIPE, HIGH_SPEED_PIPE, LOW_SPEED_PIPE, WAIT_PIPE);
-	startTask(intakeControl);
-	autonIndex = true;
-	autonIntake = true;
-	autonShoot = true;
-	wait1Msec(20000);
-	turnPID(-380);
-	wait1Msec(200);
-	setWheelSpeed(-80);
-	wait1Msec(400);
+	startTask(flywheelVelocity);
+	startAutoFlywheel(VELOCITY_MID, HIGH_SPEED_MID, LOW_SPEED_MID, WAIT_MID);
+	motor[intake] = 127;
+	motor[indexer] = 127;
+	wait1Msec(5000);
+	turnPID(300);
+	wait1Msec(300);
+	setWheelSpeed(-50);
+	wait1Msec(600);
 	setWheelSpeed(0);
-	drivePID(3000); //until hit wall
+	motor[intake] = -127;
+	startTask(autonomousDriveAcross);
+	wait1Msec(1800);
+	startTask(autonomousIntake);
+	wait1Msec(1000);
+	stopTask(autonomousDriveAcross);
+	setWheelSpeed(0);
+	wait1Msec(1000);
+	stopTask(intakeControl);
+	stopTask(autonomousIntake);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	setWheelSpeed(-40);
 	wait1Msec(200);
-	drivePID(-500);
-	turn(400);
-	autonIndex = true;
-	autonIntake = true;
-	autonShoot = true;
+	setWheelSpeed(0);
+	wait1Msec(130);
+	turnPID(-320);
+	stopTask(intakeControl);
+	motor[intake] = 127;
+	motor[indexer] = 127;
+	setWheelSpeed(-30);
+	wait1Msec(500);
+	setWheelSpeed(0);
 }
 
 task usercontrol() {

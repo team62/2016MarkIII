@@ -74,7 +74,7 @@ int waitTime = 0;
 enum { VELOCITY_LONG = 810, VELOCITY_MID = 640, VELOCITY_PIPE = 530, VELOCITY_HOLD = 300 }; //MAY NEED TO SWITCH BACK TO typedef and a name before the semicolon
 enum { HIGH_SPEED_LONG = 127, HIGH_SPEED_MID = 127, HIGH_SPEED_PIPE = 127, HIGH_SPEED_HOLD = 90 };
 enum { LOW_SPEED_LONG = 60, LOW_SPEED_MID = 45, LOW_SPEED_PIPE = 40, LOW_SPEED_HOLD = 45 };
-enum { WAIT_LONG = 400, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
+enum { WAIT_LONG = 480, WAIT_MID = 0, WAIT_PIPE = 0, WAIT_HOLD = 0 };
 
 
 bool autonIntake = false;
@@ -215,7 +215,7 @@ task abi() {
 	float kP = 0.6;//.07; for mid/pipe
 	motor[flywheel4] = 25;
 	while(motor[flywheel4] < speedB+11) {
-		motor[flywheel4]+=2;
+		motor[flywheel4]+=6;
 		delay(40);
 	}
 	int motorSpeedA, motorSpeedB;
@@ -231,7 +231,7 @@ task abi() {
 
 		writeDebugStreamLine("%d, %d, %d",motorSpeedA, motorSpeedB, currVelo*kP);
 
-		if(currVelo < (veloA==VELOCITY_LONG?veloA+50:veloA+50)) {
+		if(currVelo < (veloA==VELOCITY_LONG?veloA+53:veloA+45)) {
 			motor[flywheel4] = motorSpeedA;
 		} else {
 			motor[flywheel4] = motorSpeedB;
@@ -347,7 +347,10 @@ task intakeControl () {
 			motor[intake] = ((vexRT(Btn5U)||autonIndex)-vexRT(Btn5D))*127;
 
 			while (vexRT(Btn5U) || autonIntake) {
-				if(vexRT(Btn6U) || autonShoot) {
+				if(vexRT(Btn6D) && sensorValue[indexHigh]) {
+					motor[indexer] = -127;
+					delay(250);
+				} else if(vexRT(Btn6U) || autonShoot) {
 					//if(sensorValue[indexHigh] && getFlywheelVelocity()<currentGoalVelocity+30) {
 					if(sensorValue[indexHigh]) {
 						while(time1[T1]<=waitTime) {
@@ -356,7 +359,7 @@ task intakeControl () {
 						}
 						if(getFlywheelVelocity()>0) {
 							motor[indexer] = 127;
-							while(SensorValue[indexHigh] && (vexRT(Btn6U) || autonShoot)) { delay(5); }
+							while(SensorValue[indexHigh] && (vexRT(Btn6U)||autonShoot)) { delay(5); }
 							clearTimer(T1);
 						}
 						else {
@@ -367,15 +370,16 @@ task intakeControl () {
 						motor[indexer] = 127;
 					}
 					delay(50);
-				} else if(vexRT(Btn6D)) {
-					motor[indexer] = -127;
-					delay(250);
 				} else if(SensorValue[indexLow] || SensorValue[indexHigh]) {
 					motor[indexer] = -7;
 				} else {
 					motor[indexer] = (vexRT(Btn5U)-vexRT(Btn5D))*127;
 				}
 				delay(25);
+			}
+			if(vexRT(Btn6D) && SensorValue[indexHigh]) {
+						motor[indexer] = -127;
+						delay(250);
 			}
 			motor[indexer] = vexRT(Btn5D)?-127:0;
 			delay(25);
@@ -537,33 +541,33 @@ task autonomousIntake () {
 	}
 }
 
-void autonomous0Red() {
+void autonomous0Right() {
 	startTask(autonomousIntake);
-	setWheelSpeed(75,100);
+	setWheelSpeed(65,100);
 	wait1Msec(800);
-	setWheelSpeed(100,75);
+	setWheelSpeed(100,65);
 	wait1Msec(800);
 	setWheelSpeed(80);
 	wait1Msec(500);//distance to pipe
 	setWheelSpeed(0);
 	delay(800)
-	drivePID(-450);
+	drivePID(-380);
 	delay(200);
 	turnPID(360);
-	stopTask(autonIntake);
+	stopTask(autonomousIntake);
 	motor[intake] = 0;
 	motor[indexer] = 0;
 	delay(100);
-	drivePID(1250);
+	drivePID(1100);
 	delay(100);
-	turnPID(320);
+	turnPID(350);
 	motor[indexer] = -127;
 	motor[intake] = -127;
 	drivePID(2000);
 }
 
-void autonomous0Blue() {
-	startTask(autonIntake);
+void autonomous0Left() {
+	startTask(autonomousIntake);
 	setWheelSpeed(100,80);
 	wait1Msec(800);
 	setWheelSpeed(80,100);
@@ -575,13 +579,13 @@ void autonomous0Blue() {
 	drivePID(-450);
 	delay(200);
 	turnPID(-380);
-	stopTask(autonIntake);
+	stopTask(autonomousIntake);
 	motor[intake] = 0;
 	motor[indexer] = 0;
 	delay(100);
 	drivePID(1250);
 	delay(100);
-	turnPID(-375);
+	turnPID(-400);
 	motor[indexer] = -127;
 	motor[intake] = -127;
 	drivePID(2000);
@@ -590,26 +594,27 @@ void autonomous0Blue() {
 void autonomous1 () {
 	startTask(flywheelVelocity);
 	startAutoFlywheel(VELOCITY_LONG, HIGH_SPEED_LONG, LOW_SPEED_LONG, WAIT_LONG);
-	autonShoot = false;
+	wait1Msec(3000);
+	startTask(intakeControl);
 	autonIndex = true;
 	autonIntake = true;
-	startTask(intakeControl);
-	delay(6000);
 	autonShoot = true;
-	delay(7000);
-	autonShoot = false;
+	delay(3000);
 	startTask(stopFlywheel);
+	setWheelSpeed(-127);
+	delay(750);
+	setWheelSpeed(0);
 }
 
-void autonomous1Blue() {
+void autonomous1Left() {
 	autonomous1();
 }
 
-void autnomous1Red() {
+void autnomous1Right() {
 	autonomous1();
 }
 
-void autonomous2Red () {
+void autonomous2Left () {
 	autonIndex = true;
 	autonShoot = true;
 	autonIntake = true;
@@ -622,7 +627,7 @@ void autonomous2Red () {
 	drivePID(-1000);
 }
 
-void autonomous2Red () {
+void autonomous2Right () {
 	autonIndex = true;
 	autonShoot = true;
 	autonIntake = true;
@@ -636,13 +641,46 @@ void autonomous2Red () {
 	drivePID(-1000);
 }
 
+void autonomous3Right () {
+	motor[intake] = 127;
+	motor[indexer] = 127;
+	startAutoFlywheel(350, HIGH_SPEED_HOLD, LOW_SPEED_HOLD, WAIT_HOLD);
+	setWheelSpeed(45);
+	wait1Msec(1300);
+	setWheelSpeed(0);
+	wait1Msec(2000);
+	autonIndex = true;
+	autonShoot = false;
+	autonIntake = true;
+	startTask(stopFlywheel);
+	startTask(intakeControl);
+	turnPID(-500);
+	drivePID(1000);
+	stopTask(intakeControl);
+	motor[intake] = 0;
+	motor[indexer] = 0;
+	turnPID(-270);
+	motor[intake] = -127;
+	motor[indexer] = -127;
+	wait1Msec(1000);
+	turnPID(-600);
+	wait1Msec(200);
+	drivePID(2300);
+
+}
+
+void autonomous3Left() {
+	//autonomous3();
+}
+
 /**
 *	autonomous 0 - u shaped s curve ram balls into our goal and then turn around and shove some to us
 * autonomous 1 - 4 ball auton
 * autonomous 2 - get 2 close stax
+*	autonomous 3 - shoot out back
 **/
 task autonomous () {
-	autonomous0Blue():
+	autonomous1():
 }
 
 task usercontrol() {
