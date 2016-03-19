@@ -32,20 +32,48 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-//Stores the differient speeds for the velocity states of the robot
-enum { VELOCITY_LONG 		= 840, 	VELOCITY_MID 		= 640, 	VELOCITY_PIPE 		= 570, 		VELOCITY_HOLD 		= 300 };
-enum { HIGH_SPEED_LONG 	= 127,	HIGH_SPEED_MID 	= 127,	HIGH_SPEED_PIPE 	= 127,		HIGH_SPEED_HOLD 	= 90 };
-enum { LOW_SPEED_LONG 	= 60, 	LOW_SPEED_MID 	= 45, 	LOW_SPEED_PIPE 		= 40, 		LOW_SPEED_HOLD 		= 45 };
-enum { RAMP_LONG 				= 58, 	RAMP_MID 				= 45, 	RAMP_PIPE 				= 45, 		RAMP_HOLD 				= 45 };
-enum { WAIT_LONG 				= 580, 	WAIT_MID 				= 0, 		WAIT_PIPE 				= 0, 			WAIT_HOLD 				= 0 };
 
 bool debugMode = false;
 
+//Stores the differient speeds for the velocity states of the robot
+typedef struct {
+	int velocity;
+	int highSpeed;
+	int lowSpeed;
+	int ramp;
+	int wait;
+} flywheelShot;
+
+flywheelShot longShot, midShot, pipeShot, holdShot;
+flywheelShot currentShot;
+
+void flywheelShots() {
+	longShot.velocity = 840;
+	longShot.highSpeed = 127;
+	longShot.lowSpeed = 60;
+	longShot.ramp = 58;
+	longShot.wait = 580;
+
+	midShot.velocity = 640;
+	midShot.highSpeed = 127;
+	midShot.lowSpeed = 45;
+	midShot.ramp = 45;
+	midShot.wait = 0;
+
+	pipeShot.velocity = 570;
+	pipeShot.highSpeed = 127;
+	pipeShot.lowSpeed = 40;
+	pipeShot.ramp = 45;
+	pipeShot.wait = 0;
+
+	holdShot.velocity = 300;
+	holdShot.highSpeed = 90;
+	holdShot.lowSpeed = 45;
+	holdShot.ramp = 45;
+	holdShot.wait = 0;
+}
+
 int flywheelVelocity;
-int flywheelTargetVelocity;
-int flywheelHighSpeed;
-int flywheelLowSpeed;
-int flywheelRampThreshold;
 int flywheelReverseStartThreshold = 10;
 
 int intakeWaitTime;
@@ -78,6 +106,7 @@ void logDrive () {
 	(abs(vexRT(Ch2))*vexRT(Ch2)/127)>100?100:abs(vexRT(Ch2))*vexRT(Ch2)/127);
 }
 
+#warning "flywheelVelocityCalculation"
 task flywheelVelocityCalculation() {
 	long lastSysTime = nSysTime;
 	while(true) {
@@ -91,7 +120,7 @@ task flywheelVelocityCalculation() {
 void flywheelLCD () {
 	clearLCDLine(0);
 	displayLCDNumber(0,1,flywheelVelocity);
-	displayLCDNumber(0,5,flywheelTargetVelocity);
+	displayLCDNumber(0,5,currentShot.velocity);
 	displayLCDNumber(0,10,motor[flywheel4]);
 }
 
@@ -113,14 +142,14 @@ task flywheelControl() {
 
 	motor[flywheel4] = 25;
 
-	flywheelRampUp (flywheelLowSpeed);
+	flywheelRampUp (currentShot.lowSpeed);
 
 	int flywheelSpeedA, flywheelSpeedB;
 
 	while(true) {
 
-		flywheelSpeedA = flywheelHighSpeed + (flywheelTargetVelocity-flywheelVelocity) * kP;
-		flywheelSpeedB = flywheelLowSpeed + (flywheelTargetVelocity-flywheelVelocity) * kP;
+		flywheelSpeedA = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * kP;
+		flywheelSpeedB = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * kP;
 
 		flywheelSpeedA = flywheelSpeedA>100?100:flywheelSpeedA;
 		flywheelSpeedB = flywheelSpeedB>100?100:flywheelSpeedB;
@@ -128,7 +157,7 @@ task flywheelControl() {
 		flywheelSpeedA = flywheelSpeedA<0?0:flywheelSpeedA;
 		flywheelSpeedB = flywheelSpeedB<0?0:flywheelSpeedB;
 
-		if(flywheelVelocity < flywheelTargetVelocity+flywheelRampThreshold) {
+		if(flywheelVelocity < currentShot.velocity+currentShot.ramp) {
 			motor[flywheel4] = flywheelSpeedA;
 		} else {
 			motor[flywheel4] = flywheelSpeedB;
@@ -143,23 +172,32 @@ task flywheelControl() {
 	}
 }
 
-void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0) {
-	flywheelTargetVelocity = targetVelocity;
-	flywheelLowSpeed = lowSpeed;
-	flywheelHighSpeed = highSpeed;
-	flywheelRampThreshold = rampThreshold;
-	intakeWaitTime = waitTime;
+#warning "startFlywheel"
+void startFlywheel (flywheelShot shot) {
+	currentShot = shot;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
 	else
 		motor[flywheel4] = 0;
 }
 
+void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0) {
+	flywheelShot tempShot;
+	tempShot.velocity = targetVelocity;
+	tempShot.lowSpeed = lowSpeed;
+	tempShot.highSpeed = highSpeed;
+	tempShot.ramp = rampThreshold;
+	tempShot.wait = waitTime;
+	startFlywheel(tempShot);
+}
+
+#warning "stopFlywheel"
 void stopFlywheel () {
 	stopTask(flywheelControl);
 	motor[flywheel4] = 0;
 }
 
+#warning "intakeControl"
 task intakeControl () {
 	while(true) {
 		motor[intake] = ((vexRT(Btn5U)||intakeAutonomousIntake)-vexRT(Btn5D))*127;
@@ -225,6 +263,8 @@ void init() {
 	intakeAutonomousIntake = false;
 	intakeAutonomousIndexer = false;
 
+	flywheelShots();
+
 	startTask(intakeControl);
 	startTask(flywheelVelocityCalculation);
 }
@@ -251,22 +291,23 @@ task usercontrol() {
 	  	reverseFlywheel();
 
 	 	if(vexRT(Btn8U)) {
-			startFlywheel(VELOCITY_PIPE, LOW_SPEED_PIPE, HIGH_SPEED_PIPE, RAMP_PIPE, WAIT_PIPE);
+			startFlywheel(pipeShot);
 			while(vexRT(Btn8U)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8R)) {
-			startFlywheel(VELOCITY_MID, LOW_SPEED_MID, HIGH_SPEED_MID, RAMP_MID, WAIT_MID);
+			startFlywheel(midShot);
 			while(vexRT(Btn8R)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8L)) {
-			startFlywheel(VELOCITY_LONG, LOW_SPEED_LONG, HIGH_SPEED_LONG, RAMP_LONG, WAIT_LONG);
+			startFlywheel(longShot);
 			while(vexRT(Btn8L)) { delay(10); }
 		}
 
 		else if(vexRT(Btn7D)) {
-			startFlywheel(VELOCITY_HOLD, LOW_SPEED_HOLD, HIGH_SPEED_HOLD, RAMP_HOLD, WAIT_HOLD);
+			//startFlywheel(holdShot);
+			startFlywheel(200, 30, 60, 10, 0);
 			while(vexRT(Btn7D)) { delay(10); }
 		}
 
