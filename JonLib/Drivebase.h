@@ -1,3 +1,5 @@
+#pragma systemFile
+
 void setLeftWheelSpeed ( int speed = 127 );
 void setRightWheelSpeed ( int speed = 127 );
 
@@ -24,6 +26,6 @@ void timeDrive(int speed, int time) {
 
 void timeDrive(int speed, int time, bool stop) {
 	timeDrive(speed, time);
-	if(stop) 
+	if(stop)
 		setWheelSpeed(0);
 }
