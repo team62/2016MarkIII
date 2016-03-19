@@ -174,7 +174,11 @@ task flywheelControl() {
 
 #warning "startFlywheel"
 void startFlywheel (flywheelShot shot) {
-	currentShot = shot;
+	currentShot.velocity = shot.velocity;
+	currentShot.highSpeed = shot.highSpeed;
+	currentShot.lowSpeed = shot.lowSpeed;
+	currentShot.ramp = shot.ramp;
+	currentShot.wait = shot.wait;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
 	else
@@ -216,7 +220,7 @@ task intakeControl () {
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?-7:127;
+				motor[indexer] = (SensorValue[indexHigh])?0:127;
 			}
 		}
 
@@ -226,7 +230,7 @@ task intakeControl () {
 
 		//Stop ball if ball is at a sensor
 		else if(SensorValue[indexLow] || SensorValue[indexHigh])
-			motor[indexer] = -7;
+			motor[indexer] = 0;
 
 		//Only move ball when we want to
 		else
