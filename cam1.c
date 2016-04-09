@@ -49,11 +49,11 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 122;
+	longShot.velocity = 130;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 60;
-	longShot.ramp = 9;
-	longShot.wait = 150;
+	longShot.lowSpeed = 20;
+	longShot.ramp = 0;
+	longShot.wait = 400;
 
 	midShot.velocity = 97;
 	midShot.highSpeed = 100;
@@ -148,7 +148,7 @@ void flywheelRampUp (int target) {
 
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 0.75;
+	float kP = 1.2;
 
 	motor[flywheel4]=25;
 	motor[flywheel3]=25;
@@ -172,14 +172,14 @@ task flywheelControl() {
 
 		if(flywheelVelocity < currentShot.velocity+currentShot.ramp) {
 			motor[flywheel4] = flywheelSpeedA;
-			motor[flywheel3]= flywheelSpeedA;
-			motor[flywheel2]= flywheelSpeedA;
-			motor[flywheel1]= flywheelSpeedA;
-			} else {
+			motor[flywheel3] = flywheelSpeedA;
+			motor[flywheel2] = flywheelSpeedA;
+			motor[flywheel1] = flywheelSpeedA;
+		} else {
 			motor[flywheel4] = flywheelSpeedB;
-			motor[flywheel3]= flywheelSpeedB;
-			motor[flywheel2]= flywheelSpeedB;
-			motor[flywheel1]= flywheelSpeedB;
+			motor[flywheel3] = flywheelSpeedB;
+			motor[flywheel2] = flywheelSpeedB;
+			motor[flywheel1] = flywheelSpeedB;
 		}
 
 		if(debugMode) {
@@ -200,7 +200,7 @@ void startFlywheel (flywheelShot shot) {
 	currentShot.wait = shot.wait;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
-	else{
+	else {
 		motor[flywheel4] = 0;
 		motor[flywheel3]= 0;
 		motor[flywheel2] = 0;
@@ -240,14 +240,13 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			//if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
-			if(flywheelVelocity>=currentShot.velocity+5) {
+			if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				motor[indexer] = 127;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?-7:127;
+				motor[indexer] = (SensorValue[indexHigh])?0:127;
 			}
 		}
 
