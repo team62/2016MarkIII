@@ -49,11 +49,11 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 130;
+	longShot.velocity = 135;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 20;
+	longShot.lowSpeed = 40;
 	longShot.ramp = 0;
-	longShot.wait = 400;
+	longShot.wait = 200;
 
 	midShot.velocity = 97;
 	midShot.highSpeed = 100;
@@ -187,7 +187,7 @@ task flywheelControl() {
 			flywheelLED();
 		}
 
-		delay(30);
+		delay(25);
 	}
 }
 
@@ -241,12 +241,12 @@ task intakeControl () {
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
 			if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
-				motor[indexer] = 127;
+				motor[indexer] = 80;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?0:127;
+				motor[indexer] = (SensorValue[indexHigh])?0:80;
 			}
 		}
 
@@ -370,6 +370,10 @@ task usercontrol() {
 			motor[flywheel3]= 60;
 			motor[flywheel2] = 60;
 			motor[flywheel1]= 60;
+		}
+
+		if(vexRT(Btn7R)) {
+			motor[indexer] = 127;
 		}
 
 		else if(SensorValue[flywheelForward]) {
