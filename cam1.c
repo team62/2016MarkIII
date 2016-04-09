@@ -1,5 +1,7 @@
+#pragma config(UART_Usage, UART1, uartVEXLCD, baudRate19200, IOPins, None, None)
+#pragma config(UART_Usage, UART2, uartNotUsed, baudRate4800, IOPins, None, None)
 #pragma config(I2C_Usage, I2C1, i2cSensors)
-#pragma config(Sensor, in1,    indexLow,       sensorReflection)
+#pragma config(Sensor, in1,    indexLow,       sensorNone)
 #pragma config(Sensor, dgtl1,  flywheelEncoder, sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  indexHigh,      sensorTouch)
 #pragma config(Sensor, dgtl6,  flywheelForward, sensorTouch)
@@ -50,8 +52,8 @@ void flywheelShots() {
 	longShot.velocity = 122;
 	longShot.highSpeed = 100;
 	longShot.lowSpeed = 60;
-	longShot.ramp = 10;
-	longShot.wait = 120;
+	longShot.ramp = 9;
+	longShot.wait = 150;
 
 	midShot.velocity = 97;
 	midShot.highSpeed = 100;
@@ -135,17 +137,18 @@ void flywheelLED() {
 }
 
 void flywheelRampUp (int target) {
-	while(motor[flywheel4] < target)
+	while(motor[flywheel4] < target) {
 		motor[flywheel4]+=2;
-	motor[flywheel3]+=2;
-	motor[flywheel2]+=2;
-	motor[flywheel1]+=2;
-	wait1Msec(35);
+		motor[flywheel3]+=2;
+		motor[flywheel2]+=2;
+		motor[flywheel1]+=2;
+		wait1Msec(35);
+	}
 }
 
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 0.8;
+	float kP = 0.75;
 
 	motor[flywheel4]=25;
 	motor[flywheel3]=25;
@@ -237,7 +240,8 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			//if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			if(flywheelVelocity>=currentShot.velocity+5) {
 				motor[indexer] = 127;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
