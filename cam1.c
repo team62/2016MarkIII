@@ -49,16 +49,16 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 135;
+	longShot.velocity = 132;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 40;
+	longShot.lowSpeed = 54;
 	longShot.ramp = 0;
-	longShot.wait = 200;
+	longShot.wait = 300;
 
-	midShot.velocity = 97;
+	midShot.velocity = 110;
 	midShot.highSpeed = 100;
 	midShot.lowSpeed = 50;
-	midShot.ramp = 15;
+	midShot.ramp = 0;
 	midShot.wait = 0;
 
 	pipeShot.velocity = 95;
@@ -79,7 +79,7 @@ int flywheelReverseStartThreshold = 10;
 int flywheelSlowDownPower = -5;
 int flywheelReverseEncoderTicks = 15000;
 bool flywheelReverseEngaged = false;
-
+int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
 int intakeShootVelocityThreshold = 50;
 int intakeLightThreshold = 1300;
@@ -148,7 +148,7 @@ void flywheelRampUp (int target) {
 
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 1.2;
+	float kP = 0.9;
 
 	motor[flywheel4]=25;
 	motor[flywheel3]=25;
@@ -257,9 +257,8 @@ task intakeControl () {
 		//Stop ball if ball is at a sensor
 		else if(SensorValue[indexLow]<intakeLightThreshold && !SensorValue[indexHigh]) {
 			motor[indexer] = 70;
-			while(SensorValue[indexLow]<intakeLightThreshold && !SensorValue[indexHigh]) { delay(20); }
-			if(SensorValue[indexHigh]) { motor[indexer] = 0; }
-			wait1Msec(100);
+			clearTimer(T2);
+			while(time1[T2] < intakeMoveUpTime && !SensorValue[indexHigh]) { delay(20); }
 			motor[indexer] = 0;
 		}
 
