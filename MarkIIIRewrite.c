@@ -149,7 +149,7 @@ task flywheelControl() {
 	while(true) {
 
 		flywheelSpeedA = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * kP;
-		flywheelSpeedB = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * kP;
+		flywheelSpeedB = currentShot.lowSpeed + (currentShot.velocity-flywheelVelocity) * kP;
 
 		flywheelSpeedA = flywheelSpeedA>100?100:flywheelSpeedA;
 		flywheelSpeedB = flywheelSpeedB>100?100:flywheelSpeedB;
