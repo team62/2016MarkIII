@@ -49,9 +49,9 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 132;
+	longShot.velocity = 4550;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 54;
+	longShot.lowSpeed = 45;
 	longShot.ramp = 0;
 	longShot.wait = 300;
 
@@ -79,6 +79,7 @@ int flywheelReverseStartThreshold = 10;
 int flywheelSlowDownPower = -5;
 int flywheelReverseEncoderTicks = 15000;
 bool flywheelReverseEngaged = false;
+
 int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
 int intakeShootVelocityThreshold = 50;
@@ -114,12 +115,15 @@ void logDrive () {
 
 #warning "flywheelVelocityCalculation"
 task flywheelVelocityCalculation() {
-	SensorValue[flywheelEncoder] = 0;
-	while(true) {
-		flywheelVelocity = -SensorValue[flywheelEncoder];
-		SensorValue[flywheelEncoder] = 0;
-		delay(25);
-	}
+	int LastValue; int CurrentValue; int Error;
+	while(true){
+   LastValue = SensorValue(flywheelEncoder);
+   wait1Msec(20);
+   CurrentValue = SensorValue(flywheelEncoder);
+   Error = CurrentValue - LastValue;
+   SensorValue(flywheelEncoder) = 0;
+   flywheelVelocity = -(Error*15000)/359;
+ }
 }
 
 void flywheelLCD () {
@@ -146,9 +150,28 @@ void flywheelRampUp (int target) {
 	}
 }
 
+task jonFlywheelControl () {
+	float kP = 1.0;
+
+	motor[flywheel4]=25;
+	motor[flywheel3]=25;
+	motor[flywheel2]=25;
+	motor[flywheel1]=25;
+
+	flywheelRampUp (currentShot.lowSpeed);
+
+	int flywheelSpeed;
+
+	while(true) {
+			flywheelSpeed = motor[flywheel4] + (currentShot.velocity-flywheelVelocity)*kP;
+
+
+	}
+}
+
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 100.0;
+	float kP = 1.5;
 
 	motor[flywheel4]=25;
 	motor[flywheel3]=25;
