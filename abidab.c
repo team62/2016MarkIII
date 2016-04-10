@@ -151,7 +151,7 @@ void flywheelRampUp (int target) {
 }
 
 task jonFlywheelControl () {
-	float kP = 1.0;
+	float kP = 0.2;
 
 	motor[flywheel4]=25;
 	motor[flywheel3]=25;
@@ -165,12 +165,18 @@ task jonFlywheelControl () {
 	while(true) {
 			flywheelSpeed = motor[flywheel4] + (currentShot.velocity-flywheelVelocity)*kP;
 
+			flywheelSpeed = flywheelSpeed>100:100?flywheelSpeed;
+			flywheelSpeed = flywheelSpeed<0:0?flywheelSpeed;
 
+			motor[flywheel1] = flywheelSpeed;
+			motor[flywheel2] = flywheelSpeed;
+			motor[flywheel3] = flywheelSpeed;
+			motor[flywheel4] = flywheelSpeed;
 	}
 }
 
 #warning "flywheelControl"
-task flywheelControl() {
+task abiFlywheelControl() {
 	float kP = 1.5;
 
 	motor[flywheel4]=25;
