@@ -91,17 +91,19 @@ void LCDStartup () {
 }
 
 void debugFlywheel () {
+	waitForRelease();
+	debugFlywheelActive = true;
 	clearLCD();
-	centerLine(0,"Lift Setup");
-	centerLine(1,"4wrd Next Back");
+	centerLine(1,"<-- Next -->");
 	int flywheelSpeed;
+	string topline;
 	int flywheelMotor = 1;
 	while(flywheelMotor <= 4) {
 		while(nLCDButtons!=LCD_CENTER_BUTTON) {
 			if(nLCDButtons==LCD_LEFT_BUTTON) {
-				flywheelSpeed = 127;
-			} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
 				flywheelSpeed = -127;
+			} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
+				flywheelSpeed = 127;
 			} else {
 				flywheelSpeed = 0;
 			}
@@ -111,22 +113,29 @@ void debugFlywheel () {
 				case 3: motor[flywheel3] = flywheelSpeed; break;
 				case 4: motor[flywheel4] = flywheelSpeed; break;
 			}
-			delay(50);
+		sprintf(topLine, "Motor %d, %d", flywheelMotor, SensorValue[flywheelEncoder]);
+		clearLCDLine(0);
+		line(0,topLine);
+		delay(50);
 		}
+		waitForRelease();
 		flywheelMotor++;
 	}
+	debugDrivebaseActive = false;
 }
 
 void debugDrivebase () {
+	waitForRelease();
+	debugDrivebaseActive = true;
 	clearLCD();
 	line(0,"Left");
-	centerLine(1,"4wrd Next Back");
+	centerLine(1,"<-- Next -->");
 	string topLine;
 	while(nLCDButtons!=LCD_CENTER_BUTTON) {
 		if(nLCDButtons==LCD_LEFT_BUTTON) {
-			setLeftWheelSpeed(127);
-		} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
 			setLeftWheelSpeed(-127);
+		} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
+			setLeftWheelSpeed(127);
 		} else {
 			setLeftWheelSpeed(0);
 		}
@@ -135,32 +144,40 @@ void debugDrivebase () {
 		line(0,topLine);
 		delay(50);
 	}
+	waitForRelease();
 	clearLCDLine(0);
 	line(0, "Right");
 	while(nLCDButtons!=LCD_CENTER_BUTTON) {
 		if(nLCDButtons==LCD_LEFT_BUTTON) {
-			setRightWheelSpeed(127);
-		} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
 			setRightWheelSpeed(-127);
+		} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
+			setRightWheelSpeed(127);
 		} else {
 			setRightWheelSpeed(0);
 		}
-		sprintf(topLine, "Right: %d", nMotorEncoder(leftWheel13));
+		sprintf(topLine, "Right: %d", nMotorEncoder(rightWheel13));
 		clearLCDLine(0);
 		line(0,topLine);
 		delay(50);
 	}
+	debugDrivebaseActive = false;
+	waitForRelease();
 }
 
 void LCDDebug () {
-	clearLCD();
-	centerLine(0,"DEBUG");
-	centerLine(1,"DrvBs FW Exit");
-	waitForPress();
-	switch(nLCDButtons) {
-		case LCD_LEFT_BUTTON: 	debugDrivebase(); break;
-		case LCD_CENTRE_BUTTON:	debugFlywheel(); break;
+	waitForRelease();
+	while(nLCDButtons!=LCD_RIGHT_BUTTON) {
+		clearLCD();
+		centerLine(0,"DEBUG");
+		centerLine(1,"DrvBs FW Exit");
+		waitForPress();
+		switch(nLCDButtons) {
+			case LCD_LEFT_BUTTON: 	debugDrivebase(); break;
+			case LCD_CENTRE_BUTTON:	debugFlywheel(); break;
+		}
+		delay(25);
 	}
+	waitForRelease();
 }
 
 enum { MAIN_SCREEN = 0, BATT_SCREEN = 1, AUTON_SCREEN = 2, TEST_SCREEN = 3 };
@@ -174,7 +191,7 @@ task LCD () {
 	//Display battery voltage at start so we know what's up
 	string mainBatteryStatus, backupBatteryStatus;
 	sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0);
-	sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0);
+	sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[powerExpander]/280.0);
 	displayLCDString(0, 0, mainBatteryStatus);
 	displayLCDString(1, 0, backupBatteryStatus);
 	wait1Msec(2000);
@@ -182,7 +199,7 @@ task LCD () {
 	while(true) {
 		clearLCD();
 		displayLCDCenteredString(0,"62 NBN Mark III");
-		displayLCDString(1,0,"Batts Auton Calift");
+		displayLCDString(1,0,"Batts Auton Lift");
 		waitForPress();
 		if (nLCDButtons == LCD_LEFT_RIGHT_BUTTON) {
 			LCDDebug();
@@ -190,27 +207,28 @@ task LCD () {
 			waitForRelease();
 			clearLCD();
 			sprintf(mainBatteryStatus,"Cortex: %1.2f%c V", nImmediateBatteryLevel/1000.0);
-			sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[in1]/275.0);
+			sprintf(backupBatteryStatus,"Xpander: %1.2f%c V", SensorValue[powerExpander]/280.0);
 			displayLCDString(0, 0, mainBatteryStatus);
 			displayLCDString(1, 0, backupBatteryStatus);
 			waitForPress();
 			waitForRelease();
 		} else if(nLCDButtons == 4) {
 			waitForRelease();
+			debugFlywheelActive = true;
 			clearLCD();
 			centerLine(0,"Lift Setup");
-			centerLine(1,"4wrd Exit Back");
+			centerLine(1,"<-- Exit -->");
 			while(nLCDButtons!=LCD_CENTER_BUTTON) {
 				if(nLCDButtons==LCD_LEFT_BUTTON) {
-					motor[flywheel4] = 30;
-					motor[flywheel3] = 30;
-					motor[flywheel2] = 30;
-					motor[flywheel1] = 30;
-				} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
 					motor[flywheel4] = -30;
 					motor[flywheel3] = -30;
 					motor[flywheel2] = -30;
 					motor[flywheel1] = -30;
+				} else if(nLCDButtons==LCD_RIGHT_BUTTON) {
+					motor[flywheel4] = 30;
+					motor[flywheel3] = 30;
+					motor[flywheel2] = 30;
+					motor[flywheel1] = 30;
 				} else {
 					motor[flywheel4] = 0;
 					motor[flywheel3] = 0;
@@ -219,6 +237,7 @@ task LCD () {
 				}
 				delay(50);
 			}
+			debugFlywheelActive = false;
 			waitForRelease();
 		} else if(nLCDButtons == 2) {
 			waitForRelease();

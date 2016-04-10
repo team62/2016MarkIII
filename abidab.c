@@ -1,7 +1,6 @@
-#pragma config(UART_Usage, UART1, uartVEXLCD, baudRate19200, IOPins, None, None)
-#pragma config(UART_Usage, UART2, uartNotUsed, baudRate4800, IOPins, None, None)
 #pragma config(I2C_Usage, I2C1, i2cSensors)
-#pragma config(Sensor, in1,    indexLow,       sensorNone)
+#pragma config(Sensor, in1,    indexLow,       sensorLineFollower)
+#pragma config(Sensor, in2,    powerExpander,  sensorAnalog)
 #pragma config(Sensor, dgtl1,  flywheelEncoder, sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  indexHigh,      sensorTouch)
 #pragma config(Sensor, dgtl6,  flywheelForward, sensorTouch)
@@ -35,6 +34,8 @@
 
 
 bool debugMode = true;
+bool debugDrivebaseActive = false;
+bool debugFlywheelActive = false;
 
 //Stores the differient speeds for the velocity states of the robot
 typedef struct {
@@ -107,6 +108,14 @@ void setRightWheelSpeed ( int speed ) {
 	motor[rightWheel2] = speed;
 }
 
+#warning "setFlywheel"
+void setFlywheel ( int speed ) {
+	motor[flywheel1] = speed;
+	motor[flywheel2] = speed;
+	motor[flywheel3] = speed;
+	motor[flywheel4] = speed;
+}
+
 //Logarithmic drivebase control
 #warning "logDrive"
 void logDrive () {
@@ -152,39 +161,35 @@ void flywheelRampUp (int target) {
 	}
 }
 
-task jonFlywheelControl () {
-	float kP = 0.2;
+task jonflywheelControl () {
+	float kP = 0.02;
 
-	motor[flywheel4]=25;
-	motor[flywheel3]=25;
-	motor[flywheel2]=25;
-	motor[flywheel1]=25;
+	setFlywheel(20);
 
 	flywheelRampUp (currentShot.lowSpeed);
 
 	int flywheelSpeed;
 
 	while(true) {
-			flywheelSpeed = motor[flywheel4] + (currentShot.velocity-flywheelVelocity)*kP;
+		flywheelSpeed = motor[flywheel4] + (currentShot.velocity-flywheelVelocity)*kP;
 
-			flywheelSpeed = flywheelSpeed>100?100:flywheelSpeed;
-			flywheelSpeed = flywheelSpeed<0?0:flywheelSpeed;
+		clearLCDLine(0);
+		displayLCDNumber(0,1,flywheelSpeed);
+		displayLCDNumber(0,5,flywheelVelocity);
+		displayLCDNumber(0,10,(currentShot.velocity-flywheelVelocity)*kP);
 
-			motor[flywheel1] = flywheelSpeed;
-			motor[flywheel2] = flywheelSpeed;
-			motor[flywheel3] = flywheelSpeed;
-			motor[flywheel4] = flywheelSpeed;
+		flywheelSpeed = flywheelSpeed>100?100:flywheelSpeed;
+		flywheelSpeed = flywheelSpeed<0?0:flywheelSpeed;
+
+		setFlywheel(flywheelSpeed);
 	}
 }
 
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 1.5;
+	float kP = 0.05;
 
-	motor[flywheel4]=25;
-	motor[flywheel3]=25;
-	motor[flywheel2]=25;
-	motor[flywheel1]=25;
+	setFlywheel(20);
 
 	flywheelRampUp (currentShot.lowSpeed);
 
@@ -202,15 +207,9 @@ task flywheelControl() {
 		flywheelSpeedB = flywheelSpeedB<0?0:flywheelSpeedB;
 
 		if(flywheelVelocity < currentShot.velocity+currentShot.ramp) {
-			motor[flywheel4] = flywheelSpeedA;
-			motor[flywheel3] = flywheelSpeedA;
-			motor[flywheel2] = flywheelSpeedA;
-			motor[flywheel1] = flywheelSpeedA;
+			setFlywheel(flywheelSpeedA);
 		} else {
-			motor[flywheel4] = flywheelSpeedB;
-			motor[flywheel3] = flywheelSpeedB;
-			motor[flywheel2] = flywheelSpeedB;
-			motor[flywheel1] = flywheelSpeedB;
+			setFlywheel(flywheelSpeedB);
 		}
 
 		if(debugMode) {
@@ -231,12 +230,8 @@ void startFlywheel (flywheelShot shot) {
 	currentShot.wait = shot.wait;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
-	else {
-		motor[flywheel4] = 0;
-		motor[flywheel3]= 0;
-		motor[flywheel2] = 0;
-		motor[flywheel1]= 0;
-	}
+	else
+		setFlywheel(0);
 }
 
 void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0) {
@@ -252,10 +247,7 @@ void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThr
 #warning "stopFlywheel"
 void stopFlywheel () {
 	stopTask(flywheelControl);
-		motor[flywheel4] = 0;
-		motor[flywheel3]= 0;
-		motor[flywheel2] = 0;
-		motor[flywheel1]= 0;
+	setFlywheel(0);
 }
 
 #warning "intakeControl"
@@ -304,26 +296,17 @@ task reverseFlywheel () {
 	while(true) {
 		if(vexRT(Btn7L) && flywheelVelocity > flywheelReverseStartThreshold) {
 			stopFlywheel();
-			motor[flywheel1] = flywheelSlowDownPower;
-			motor[flywheel2] = flywheelSlowDownPower;
-			motor[flywheel3] = flywheelSlowDownPower;
-			motor[flywheel4] = flywheelSlowDownPower;
+			setFlywheel(flywheelSlowDownPower);
 			delay(25);
 		}
 		else {
 			while(vexRT(Btn7L)) {
 				stopFlywheel();
-				motor[flywheel1] = -127;
-				motor[flywheel2] = -127;
-				motor[flywheel3] = -127;
-				motor[flywheel4] = -127;
+				setFlywheel(-127);
 				delay(25);
 			}
-			if(flywheelVelocity < 0) {
-				motor[flywheel1] = 0;
-				motor[flywheel2] = 0;
-				motor[flywheel3] = 0;
-				motor[flywheel4] = 0;
+			if(flywheelVelocity < 0 && !debugFlywheelActive) {
+				setFlywheel(0);
 			}
 		}
 		delay(25);
@@ -376,7 +359,8 @@ task usercontrol() {
 
 	while (true) {
 
-		logDrive();
+		if(!debugDrivebaseActive)
+			logDrive();
 
 		if(vexRT(Btn8U)) {
 			startFlywheel(pipeShot);
@@ -399,23 +383,9 @@ task usercontrol() {
 			while(vexRT(Btn7D)) { delay(10); }
 		}
 
-		else if(vexRT(Btn7U)) {
-			motor[flywheel4] = 60;
-			motor[flywheel3]= 60;
-			motor[flywheel2] = 60;
-			motor[flywheel1]= 60;
-		}
-
-		if(vexRT(Btn7R)) {
-			motor[indexer] = 127;
-		}
-
-		else if(SensorValue[flywheelForward]) {
-			motor[flywheel1] = 127;
-			motor[flywheel2] = 127;
-			motor[flywheel3] = 127;
-			motor[flywheel4] = 127;
-		}
+		// for debugging - consider removing
+		else if(vexRT(Btn7U))
+			setFlywheel(60);
 
 		else if(vexRT(Btn8D))
 			stopFlywheel();
