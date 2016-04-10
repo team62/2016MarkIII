@@ -88,6 +88,8 @@ bool intakeAutonomousIntake;
 bool intakeAutonomousIndexer;
 bool intakeAutonomousShoot;
 
+int autonomousChoice;
+
 #include "JonLib/Drivebase.h"
 #include "JonLib/PID.h"
 #include "autonomous.c"
@@ -165,8 +167,8 @@ task jonFlywheelControl () {
 	while(true) {
 			flywheelSpeed = motor[flywheel4] + (currentShot.velocity-flywheelVelocity)*kP;
 
-			flywheelSpeed = flywheelSpeed>100:100?flywheelSpeed;
-			flywheelSpeed = flywheelSpeed<0:0?flywheelSpeed;
+			flywheelSpeed = flywheelSpeed>100?100:flywheelSpeed;
+			flywheelSpeed = flywheelSpeed<0?0:flywheelSpeed;
 
 			motor[flywheel1] = flywheelSpeed;
 			motor[flywheel2] = flywheelSpeed;
@@ -176,7 +178,7 @@ task jonFlywheelControl () {
 }
 
 #warning "flywheelControl"
-task abiFlywheelControl() {
+task flywheelControl() {
 	float kP = 1.5;
 
 	motor[flywheel4]=25;
@@ -328,6 +330,8 @@ task reverseFlywheel () {
 	}
 }
 
+#include "LCD.c"
+
 #warning "init"
 void init() {
 	playTone(700,10);
@@ -352,6 +356,8 @@ void init() {
 	startTask(intakeControl);
 	startTask(flywheelVelocityCalculation);
 	startTask(reverseFlywheel);
+
+	startTask(LCD);
 }
 
 void pre_auton()
