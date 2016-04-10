@@ -37,7 +37,7 @@ bool drivePID(int distance) {
 		int StraightOut = straight.kP*straight.error + straight.kI*straight.integral + straight.kD*straight.derivative;
 		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
 
-		clearLCD();
+		//clearLCD();
 		setLeftWheelSpeed(StraightOut+AngleOut);
 		setRightWheelSpeed(StraightOut-AngleOut);
 		delay(50);
@@ -87,7 +87,7 @@ bool sTurnPID(int distance, int coefficient) {
 		int StraightOut = straight.kP*straight.error + straight.kI*straight.integral + straight.kD*straight.derivative;
 		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative + coefficient;
 
-		clearLCD();
+		//clearLCD();
 		setLeftWheelSpeed(StraightOut+AngleOut);
 		setRightWheelSpeed(StraightOut-AngleOut);
 		delay(50);
@@ -128,7 +128,7 @@ bool turnPID(int distance) {
 
 		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
 
-		clearLCD();
+		//clearLCD();
 		setLeftWheelSpeed(AngleOut);
 		setRightWheelSpeed(-AngleOut);
 		delay(50);
