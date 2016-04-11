@@ -1,5 +1,5 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
-#pragma config(Sensor, in1,    indexLow,       sensorLineFollower)
+#pragma config(Sensor, in1,    indexLow,       sensorNone)
 #pragma config(Sensor, in2,    powerExpander,  sensorAnalog)
 #pragma config(Sensor, dgtl1,  flywheelEncoder, sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  indexHigh,      sensorTouch)
@@ -44,29 +44,33 @@ typedef struct {
 	int lowSpeed;
 	int ramp;
 	int wait;
+	float kP;
 } flywheelShot;
 
 flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 4550;
+	longShot.velocity = 4500;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 45;
+	longShot.lowSpeed = 38;
 	longShot.ramp = 0;
-	longShot.wait = 300;
+	longShot.wait = 330;
+	longShot.kP = 0.07;
 
-	midShot.velocity = 110;
+	midShot.velocity = 3700;
 	midShot.highSpeed = 100;
-	midShot.lowSpeed = 50;
+	midShot.lowSpeed = 55;
 	midShot.ramp = 0;
 	midShot.wait = 0;
+	midShot.kP = 0.07;
 
-	pipeShot.velocity = 95;
+	pipeShot.velocity = 3400;
 	pipeShot.highSpeed = 100;
-	pipeShot.lowSpeed = 40;
-	pipeShot.ramp = 7;
+	pipeShot.lowSpeed = 45;
+	pipeShot.ramp = 0;
 	pipeShot.wait = 0;
+	pipeShot.kP = 0.07;
 
 	holdShot.velocity = 300;
 	holdShot.highSpeed = 90;
@@ -187,7 +191,6 @@ task jonflywheelControl () {
 
 #warning "flywheelControl"
 task flywheelControl() {
-	float kP = 0.05;
 
 	setFlywheel(20);
 
@@ -197,8 +200,8 @@ task flywheelControl() {
 
 	while(true) {
 
-		flywheelSpeedA = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * kP;
-		flywheelSpeedB = currentShot.lowSpeed + (currentShot.velocity-flywheelVelocity) * kP;
+		flywheelSpeedA = currentShot.highSpeed + (currentShot.velocity-flywheelVelocity) * currentShot.kP;
+		flywheelSpeedB = currentShot.lowSpeed + (currentShot.velocity-flywheelVelocity) * currentShot.kP;
 
 		flywheelSpeedA = flywheelSpeedA>100?100:flywheelSpeedA;
 		flywheelSpeedB = flywheelSpeedB>100?100:flywheelSpeedB;
@@ -228,19 +231,21 @@ void startFlywheel (flywheelShot shot) {
 	currentShot.lowSpeed = shot.lowSpeed;
 	currentShot.ramp = shot.ramp;
 	currentShot.wait = shot.wait;
+	currentShot.kP = shot.kP;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
 	else
 		setFlywheel(0);
 }
 
-void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0) {
+void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0, float kP = 0.07) {
 	flywheelShot tempShot;
 	tempShot.velocity = targetVelocity;
 	tempShot.lowSpeed = lowSpeed;
 	tempShot.highSpeed = highSpeed;
 	tempShot.ramp = rampThreshold;
 	tempShot.wait = waitTime;
+	tempShot.kP = kP;
 	startFlywheel(tempShot);
 }
 
