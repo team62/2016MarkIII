@@ -51,16 +51,16 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 4600;
+	longShot.velocity = 5250;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 38;
+	longShot.lowSpeed = 35;
 	longShot.ramp = 0;
-	longShot.wait = 400;
-	longShot.kP = 0.03;
+	longShot.wait = 300;
+	longShot.kP = 0.07;
 
-	midShot.velocity = 3700;
+	midShot.velocity = 4500;
 	midShot.highSpeed = 100;
-	midShot.lowSpeed = 55;
+	midShot.lowSpeed = 35;
 	midShot.ramp = 0;
 	midShot.wait = 0;
 	midShot.kP = 0.07;
@@ -130,15 +130,13 @@ void logDrive () {
 
 #warning "flywheelVelocityCalculation"
 task flywheelVelocityCalculation() {
-	int LastValue; int CurrentValue; int Error;
+	long lastTime;
 	while(true){
-   LastValue = SensorValue(flywheelEncoder);
-   wait1Msec(20);
-   CurrentValue = SensorValue(flywheelEncoder);
-   Error = CurrentValue - LastValue;
-   SensorValue(flywheelEncoder) = 0;
-   flywheelVelocity = -(Error*15000)/359;
- }
+		lastTime = nSysTime;
+  	delay(25);
+  	flywheelVelocity = -(SensorValue[flywheelEncoder]*1000)/(nSysTime-lastTime);
+  	SensorValue[flywheelEncoder] = 0;
+	}
 }
 
 void flywheelLCD () {
@@ -218,6 +216,9 @@ task flywheelControl() {
 		if(debugMode) {
 			flywheelLCD();
 			flywheelLED();
+			clearLCDLine(1);
+			displayLCDNumber(1,1,flywheelSpeedA);
+			displayLCDNumber(1,5,flywheelSpeedB);
 		}
 
 		delay(25);
@@ -269,7 +270,8 @@ task intakeControl () {
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
 			if(flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
-				motor[indexer] = 80;
+			//if(abs(currentShot.velocity-flywheelVelocity)<50) {
+				motor[indexer] = 127;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
 			}
@@ -342,7 +344,7 @@ void init() {
 	flywheelShots();
 
 	startTask(intakeControl);
-	startTask(flywheelVelocityCalculation);
+	startTask(flywheelVelocityCalculation, kHighPriority);
 	startTask(reverseFlywheel);
 
 	startTask(LCD);
