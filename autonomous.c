@@ -2,142 +2,95 @@
 
 #warning "drivePID"
 
-bool drivePID(int distance) {
-	nMotorEncoder[leftWheel13] = 0;
-	nMotorEncoder[rightWheel13] = 0;
-	pid straight;
-	pid angle;
+pid l;
+pid r;
 
-	straight.kP = 0.04;
-	straight.kI = 0.0001;
-	straight.kD = 0.04;
+task drivebasePID () {
+	double kP = 0.055;
+	double kI = 0.0005;
+	double kD = 0.5;
+	double threshold = 20;
 
-	angle.kP = 0.02;//for
-	angle.kI = 0.0000;
-	angle.kD = 0;  //.15;
+	l.threshold = threshold;
+	r.threshold = threshold;
 
-	int timeGuess = 3*abs(distance);//#magic number 5
-	clearTimer(T2);
-	angle.target=0;
-	straight.target=distance;
-	do{
-		straight.error=straight.target -( nMotorEncoder[leftWheel13]+	nMotorEncoder[rightWheel13]);
-		angle.error=(nMotorEncoder[leftWheel13]-nMotorEncoder[rightWheel13]); //target is 0 so lazy
+	l.kP = kP;
+	r.kP = kP;
 
+	l.kI = kI;
+	r.kI = kI;
 
-		if(angle.error == 0) { angle.integral = 0; }
-		if(straight.error == 0) { straight.integral = 0; }
+	l.kD = kD;
+	r.kD = kD;
 
-		straight.derivative = straight.error - straight.lastError;
-		angle.derivative = angle.error - angle.lastError;
+	while (true) {
+		l.error = l.target - nMotorEncoder[leftWheel13]; //add sensor
+		r.error = r.target - nMotorEncoder[rightWheel13]; //same
 
-		straight.lastError = straight.error;
-		angle.lastError = angle.error;
+		l.integral += l.error;
+		r.integral += r.error;
 
-		int StraightOut = straight.kP*straight.error + straight.kI*straight.integral + straight.kD*straight.derivative;
-		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
+		if(l.error == 0) { l.integral = 0; }
+		if(r.error == 0) { r.integral = 0; }
 
-		//clearLCD();
-		setLeftWheelSpeed(StraightOut+AngleOut);
-		setRightWheelSpeed(StraightOut-AngleOut);
+		l.derivative = l.error - l.lastError;
+		r.derivative = l.error - l.lastError;
+
+		l.lastError = l.error;
+		r.lastError = r.error;
+
+		int leftOut = l.kP*l.error + l.kI*l.integral + l.kD*l.derivative;
+		int rightOut = r.kP*r.error + r.kI*r.integral + r.kD*r.derivative;
+
+		leftOut = leftOut>127?127:leftOut;
+		rightOut = rightOut>127?127:rightOut;
+
+		leftOut = leftOut<-127?-127:leftOut;
+		rightOut = rightOut<-127?-127:rightOut;
+
+		l.integral = l.error==0?0:l.integral;
+		r.integral = r.error==0?0:r.integral;
+
+		setLeftWheelSpeed(leftOut);
+		setRightWheelSpeed(rightOut);
+
 		delay(50);
-		if(time1[T2]>timeGuess){ //if something went wrong give up
-			setWheelSpeed(0);
-			return false;
-		}
-	}	while(abs(straight.error)>30 || abs(straight.lastError)>30);
-	setWheelSpeed(0);
-	return true;
+
+	}
 }
 
-
-#warning "sTurnPID"
-bool sTurnPID(int distance, int coefficient) {
-	nMotorEncoder[leftWheel13] = 0;
-	nMotorEncoder[rightWheel13] = 0;
-	pid straight;
-	pid angle;
-
-	straight.kP = 0.04;
-	straight.kI = 0.0001;
-	straight.kD = 0.04;
-
-	angle.kP = 0.02;//for
-	angle.kI = 0.0000;
-	angle.kD = 0;//.15;
-
-	int timeGuess = 3*abs(distance);//#magic number 5
-	clearTimer(T2);
-	angle.target=coefficient;
-	straight.target=distance;
-	do{
-		straight.error=straight.target -( nMotorEncoder[leftWheel13]+	nMotorEncoder[rightWheel13]);
-		angle.error=(nMotorEncoder[leftWheel13]-nMotorEncoder[rightWheel13]); //target is 0 so lazy
-
-
-		if(angle.error == 0) { angle.integral = 0; }
-		if(straight.error == 0) { straight.integral = 0; }
-
-		straight.derivative = straight.error - straight.lastError;
-		angle.derivative = angle.error - angle.lastError;
-
-		straight.lastError = straight.error;
-		angle.lastError = angle.error;
-
-		int StraightOut = straight.kP*straight.error + straight.kI*straight.integral + straight.kD*straight.derivative;
-		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative + coefficient;
-
-		//clearLCD();
-		setLeftWheelSpeed(StraightOut+AngleOut);
-		setRightWheelSpeed(StraightOut-AngleOut);
-		delay(50);
-		if(time1[T2]>timeGuess){ //if something went wrong give up
-			setWheelSpeed(0);
-			return false;
-		}
-	}	while(abs(straight.error)>30 || abs(straight.lastError)>30);
-	setWheelSpeed(0);
-	return true;
+void addTarget (int leftTarget, int rightTarget) {
+	l.target += leftTarget;
+	r.target += rightTarget;
 }
 
-#warning "turn"
-bool turnPID(int distance) {
-	nMotorEncoder[leftWheel13] = 0;
-	nMotorEncoder[rightWheel13] = 0;
-	pid angle;
+void addTarget (int target) {
+	addTarget(target, target);
+}
 
+void addTargetAuto (int leftTarget, int rightTarget) {
+	addTarget(leftTarget, rightTarget);
+	while (l.error<=l.threshold && r.error<=r.threshold) { delay(25); }
+}
 
-	angle.kP = 0.2;//for
-	angle.kI = 0.0000;
-	angle.kD = 0.15;
+void addTargetAuto (int target) {
+	addTargetAuto(target, target);
+}
 
-	int timeGuess = 3*abs(distance);//#magic number 5
-	clearTimer(T2);
-	angle.target = distance;
-	do{
+void setTarget (int leftTarget, int rightTarget) {
+	l.target = leftTarget;
+	r.target = rightTarget;
+}
 
-	 angle.error=angle.target-(nMotorEncoder[leftWheel13]-nMotorEncoder[rightWheel13]); //target is 0 so lazy
+void setTarget (int target) {
+	setTarget(target, target);
+}
 
+void setTargetAuto (int leftTarget, int rightTarget) {
+	setTarget(leftTarget, rightTarget);
+	while (l.error<=l.threshold && r.error<=r.threshold) { delay(25); }
+}
 
-		if(angle.error == 0) { angle.integral = 0; }
-
-
-		angle.derivative = angle.error - angle.lastError;
-
-		angle.lastError = angle.error;
-
-		int AngleOut = angle.kP*angle.error + angle.kI*angle.integral + angle.kD*angle.derivative;
-
-		//clearLCD();
-		setLeftWheelSpeed(AngleOut);
-		setRightWheelSpeed(-AngleOut);
-		delay(50);
-		if(time1[T2]>timeGuess){ //if something went wrong give up
-			setWheelSpeed(0);
-			return false;
-		}
-	}	while(abs(angle.error)>30 || abs(angle.lastError)>30);
-	setWheelSpeed(0);
-	return true;
-
+void setTargetAuto (int target) {
+	setAutoTarget(target, target);
 }
