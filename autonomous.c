@@ -60,8 +60,8 @@ task drivebasePID () {
 }
 
 void addTarget (int leftTarget, int rightTarget) {
-	l.target += leftTarget;
-	r.target += rightTarget;
+	l.target = nMotorEncoder(leftWheel13) + leftTarget;
+	r.target = nMotorEncoder(rightWheel13) + rightTarget;
 }
 
 void addTarget (int target) {
@@ -92,5 +92,5 @@ void setTargetAuto (int leftTarget, int rightTarget) {
 }
 
 void setTargetAuto (int target) {
-	setAutoTarget(target, target);
+	setTargetAuto(target, target);
 }

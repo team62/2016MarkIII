@@ -56,7 +56,7 @@ void flywheelShots() {
 	longShot.wait = 300;
 	longShot.kP = 0.07;
 	longShot.velocityShot = true;
-	longShot.velocityThreshold = 50;
+	longShot.velocityThreshold = 20;
 
 	midShot.velocity = 4500;
 	midShot.highSpeed = 100;
@@ -83,9 +83,10 @@ void flywheelShots() {
 }
 
 int flywheelVelocity;
+int flywheelVelocityUpdateFrequency = 30;
 int flywheelReverseStartThreshold = 10;
 int flywheelSlowDownPower = -2;
-int flywheelSlowDownVelocity = 3500;
+int flywheelSlowDownVelocity = 4000;
 int flywheelReverseEncoderTicks = 15000;
 bool flywheelReverseEngaged = false;
 
@@ -137,7 +138,7 @@ task flywheelVelocityCalculation() {
 	long lastTime;
 	while(true){
 		lastTime = nSysTime;
-  	delay(25);
+  	delay(flywheelVelocityUpdateFrequency);
   	flywheelVelocity = (SensorValue[flywheelEncoder]*1000)/(nSysTime-lastTime);
   	SensorValue[flywheelEncoder] = 0;
 	}
@@ -225,7 +226,7 @@ task flywheelControl() {
 			displayLCDNumber(1,5,flywheelSpeedB);
 		}
 
-		delay(25);
+		delay(30);
 	}
 }
 
@@ -237,13 +238,15 @@ void startFlywheel (flywheelShot shot) {
 	currentShot.ramp = shot.ramp;
 	currentShot.wait = shot.wait;
 	currentShot.kP = shot.kP;
+	currentShot.velocityShot = shot.velocityShot;
+	currentShot.velocityThreshold = shot.velocityThreshold;
 	if(flywheelVelocity >= 0)
 		startTask(flywheelControl, kHighPriority);
 	else
 		setFlywheel(0);
 }
 
-void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0, float kP = 0.07) {
+void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0, float kP = 0.07, bool velocityShot = false, int velocityThreshold = 50) {
 	flywheelShot tempShot;
 	tempShot.velocity = targetVelocity;
 	tempShot.lowSpeed = lowSpeed;
@@ -251,6 +254,8 @@ void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThr
 	tempShot.ramp = rampThreshold;
 	tempShot.wait = waitTime;
 	tempShot.kP = kP;
+	tempShot.velocityShot = velocityShot;
+	tempShot.velocityThreshold = velocityThreshold;
 	startFlywheel(tempShot);
 }
 
@@ -279,7 +284,7 @@ task intakeControl () {
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?0:80;
+				motor[indexer] = (SensorValue[indexHigh])?0:127;
 			}
 		}
 
@@ -306,9 +311,14 @@ task reverseFlywheel () {
 	while(true) {
 		if(vexRT(Btn7L) && flywheelVelocity > flywheelReverseStartThreshold) {
 			stopFlywheel();
-			while(flywheelVelocity>flywheelSlowDownVelocity) { clearLCDLine(0); displayLCDNumber(0,0,flywheelVelocity); delay(25); }
-			setFlywheel(flywheelSlowDownPower);
-			delay(25);
+			clearLCDLine(1);
+			while(flywheelVelocity>0) {
+				setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.3));
+				clearLCDLine(0);
+				displayLCDNumber(0,0,flywheelVelocity);
+				displayLCDNumber(0,10,motor[flywheel1]);
+				delay(25);
+			}
 		}
 		else {
 			while(vexRT(Btn7L)) {
