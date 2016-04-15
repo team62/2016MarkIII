@@ -164,6 +164,32 @@ void debugDrivebase () {
 	waitForRelease();
 }
 
+void testShot () {
+	waitForRelease();
+	clearLCD();
+	centerLine(0,"Test Shots");
+	centerLine(1,"Skills Long Exit");
+	while(nLCDButtons != LCD_RIGHT_BUTTON) {
+		//Skills
+		intakeAutonomousShoot = true;
+		intakeAutonomousIndexer = true;
+		intakeAutonomousIntake = true;
+		if(nLCDButtons == LCD_LEFT_BUTTON) {
+			startFlywheel(midShot);
+			waitForRelease();
+		} else if (nLCDButtons == LCD_CENTRE_BUTTON) {
+			startFlywheel(longShot);
+			waitForRelease();
+		}
+		delay(25);
+	}
+	stopFlywheel();
+	intakeAutonomousShoot = false;
+	intakeAutonomousIndexer = false;
+	intakeAutonomousIntake = false;
+	waitForRelease();
+}
+
 void LCDDebug () {
 	waitForRelease();
 	while(nLCDButtons!=LCD_RIGHT_BUTTON) {
@@ -201,7 +227,9 @@ task LCD () {
 		displayLCDCenteredString(0,"62 NBN Mark III");
 		displayLCDString(1,0,"Batts Auton Lift");
 		waitForPress();
-		if (nLCDButtons == LCD_LEFT_RIGHT_BUTTON) {
+		if (nLCDButtons == LCD_LEFT_CENTRE_BUTTON) {
+			testShot();
+		} else if (nLCDButtons == LCD_LEFT_RIGHT_BUTTON) {
 			LCDDebug();
 		} else if(nLCDButtons == 1) {
 			waitForRelease();

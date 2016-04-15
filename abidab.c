@@ -56,7 +56,7 @@ void flywheelShots() {
 	longShot.wait = 300;
 	longShot.kP = 0.07;
 	longShot.velocityShot = true;
-	longShot.velocityThreshold = 20;
+	longShot.velocityThreshold = 25;
 
 	midShot.velocity = 4500;
 	midShot.highSpeed = 100;
@@ -83,11 +83,12 @@ void flywheelShots() {
 }
 
 int flywheelVelocity;
-int flywheelVelocityUpdateFrequency = 30;
+int flywheelVelocityUpdateFrequency = 40;
 int flywheelReverseStartThreshold = 10;
 int flywheelSlowDownPower = -2;
 int flywheelSlowDownVelocity = 4000;
 int flywheelReverseEncoderTicks = 15000;
+int flywheelControlUpdateFrequency = flywheelVelocityUpdateFrequency;
 bool flywheelReverseEngaged = false;
 
 int intakeMoveUpTime = 200;
@@ -226,7 +227,7 @@ task flywheelControl() {
 			displayLCDNumber(1,5,flywheelSpeedB);
 		}
 
-		delay(30);
+		delay(flywheelControlUpdateFrequency);
 	}
 }
 
@@ -279,6 +280,7 @@ task intakeControl () {
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
 			if(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
@@ -340,6 +342,8 @@ task reverseFlywheel () {
 void init() {
 	playTone(700,10);
 
+	clearDebugStream();
+
 	//Slave Motors
 	//slaveMotor(flywheel2,flywheel4);
 	//slaveMotor(flywheel3,flywheel4);
@@ -355,11 +359,11 @@ void init() {
 
 	flywheelShots();
 
-	startTask(intakeControl);
+	startTask(intakeControl, kHighPriority);
 	startTask(flywheelVelocityCalculation, kHighPriority);
 	startTask(reverseFlywheel);
 
-	startTask(LCD);
+	startTask(LCD, kLowPriority);
 }
 
 void pre_auton() {
