@@ -56,7 +56,7 @@ void flywheelShots() {
 	longShot.wait = 300;
 	longShot.kP = 0.07;
 	longShot.velocityShot = true;
-	longShot.velocityThreshold = 25;
+	longShot.velocityThreshold = 75;
 
 	midShot.velocity = 4500;
 	midShot.highSpeed = 100;
@@ -83,7 +83,7 @@ void flywheelShots() {
 }
 
 int flywheelVelocity;
-int flywheelVelocityUpdateFrequency = 40;
+int flywheelVelocityUpdateFrequency = 25;
 int flywheelReverseStartThreshold = 10;
 int flywheelSlowDownPower = -2;
 int flywheelSlowDownVelocity = 4000;
