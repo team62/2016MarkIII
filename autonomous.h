@@ -5,11 +5,14 @@
 pid l;
 pid r;
 
+int maxSpeed = 100;
+
 task drivebasePID () {
-	double kP = 0.055;
-	double kI = 0.0005;
-	double kD = 0.5;
-	double threshold = 20;
+
+	double kP = 0.1;
+	double kI = 0.001;
+	double kD = 0.8;
+	double threshold = 50;
 
 	l.threshold = threshold;
 	r.threshold = threshold;
@@ -42,26 +45,36 @@ task drivebasePID () {
 		int leftOut = l.kP*l.error + l.kI*l.integral + l.kD*l.derivative;
 		int rightOut = r.kP*r.error + r.kI*r.integral + r.kD*r.derivative;
 
-		leftOut = leftOut>127?127:leftOut;
-		rightOut = rightOut>127?127:rightOut;
+		leftOut = leftOut>maxSpeed?maxSpeed:leftOut;
+		rightOut = rightOut>maxSpeed?maxSpeed:rightOut;
 
-		leftOut = leftOut<-127?-127:leftOut;
-		rightOut = rightOut<-127?-127:rightOut;
-
-		l.integral = l.error==0?0:l.integral;
-		r.integral = r.error==0?0:r.integral;
+		leftOut = leftOut<-maxSpeed?-maxSpeed:leftOut;
+		rightOut = rightOut<-maxSpeed?-maxSpeed:rightOut;
 
 		setLeftWheelSpeed(leftOut);
 		setRightWheelSpeed(rightOut);
 
-		delay(50);
+		delay(25);
 
 	}
 }
 
-void addTarget (int leftTarget, int rightTarget) {
+void addTargetNoIntegral (int leftTarget, int rightTarget, int speed) {
+	maxSpeed = speed;
 	l.target = nMotorEncoder(leftWheel13) + leftTarget;
 	r.target = nMotorEncoder(rightWheel13) + rightTarget;
+}
+
+void addTarget (int leftTarget, int rightTarget, int speed) {
+	maxSpeed = speed;
+	l.integral = 0;
+	r.integral = 0;
+	l.target = nMotorEncoder(leftWheel13) + leftTarget;
+	r.target = nMotorEncoder(rightWheel13) + rightTarget;
+}
+
+void addTarget (int leftTarget, int rightTarget) {
+	addTarget(leftTarget, rightTarget, 100);
 }
 
 void addTarget (int target) {
@@ -77,9 +90,16 @@ void addTargetAuto (int target) {
 	addTargetAuto(target, target);
 }
 
-void setTarget (int leftTarget, int rightTarget) {
+void setTarget (int leftTarget, int rightTarget , int speed) {
+	maxSpeed = speed;
+	l.integral = 0;
+	r.integral = 0;
 	l.target = leftTarget;
 	r.target = rightTarget;
+}
+
+void setTarget (int leftTarget, int rightTarget) {
+	setTarget(leftTarget, rightTarget, 100);
 }
 
 void setTarget (int target) {

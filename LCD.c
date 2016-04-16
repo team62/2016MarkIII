@@ -1,9 +1,5 @@
 #include "JonLib/LCD.h"
 
-bool testEncoder ();
-
-void spinFlywheel ( int speed );
-
 #warning "LCDStartup"
 void LCDStartup () {
 	string lines[10];
@@ -113,9 +109,9 @@ void debugFlywheel () {
 				case 3: motor[flywheel3] = flywheelSpeed; break;
 				case 4: motor[flywheel4] = flywheelSpeed; break;
 			}
-		sprintf(topLine, "Motor %d, %d", flywheelMotor, SensorValue[flywheelEncoder]);
+		sprintf(topline, "Motor %d, %d", flywheelMotor, SensorValue[flywheelEncoder]);
 		clearLCDLine(0);
-		line(0,topLine);
+		line(0,topline);
 		delay(50);
 		}
 		waitForRelease();
