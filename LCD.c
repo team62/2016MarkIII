@@ -220,7 +220,10 @@ task LCD () {
 
 	while(true) {
 		clearLCD();
-		displayLCDCenteredString(0,"62 NBN Mark III");
+		if(autonomousChoice != -1)
+			displayLCDCenteredString(0,"AUTON SELECTED");
+		else
+			displayLCDCenteredString(0,"62 NBN Mark III");
 		displayLCDString(1,0,"Batts Auton Lift");
 		waitForPress();
 		if (nLCDButtons == LCD_LEFT_CENTRE_BUTTON) {
@@ -267,51 +270,18 @@ task LCD () {
 			waitForRelease();
 			int choice = 0;
 			while(nLCDButtons != 2) {
-				switch (choice) {
-					case 0:
-						clearLCD();
-						displayLCDCenteredString(0, "Auton 0");
-						displayLCDCenteredString(1, "Select");
-						waitForPress();
-						if(nLCDButtons == 1){
-							waitForRelease();
-							choice = 2;
-						} else if(nLCDButtons == 4) {
-							waitForRelease();
-							choice++;
-						}
-					break;
-					case 1:
-						clearLCD();
-						displayLCDCenteredString(0, "Auton 1");
-						displayLCDCenteredString(1, "Select");
-						waitForPress();
-						if(nLCDButtons == 1){
-							waitForRelease();
-							choice--;
-						} else if(nLCDButtons == 4) {
-							waitForRelease();
-							choice++;
-						}
-					break;
-					case 2:
-						clearLCD();
-						displayLCDCenteredString(0, "Auton 2");
-						displayLCDCenteredString(1, "Select");
-						waitForPress();
-						//Increment or decrement "count" based on button press
-						if(nLCDButtons == 1) {
-							waitForRelease();
-							choice--;
-						} else if(nLCDButtons == 4) {
-							waitForRelease();
-							choice = 0;
-						}
-					break;
-					default:
-						choice = 0;
-					break;
+				centerLine(0,autonomousMenu[choice]);
+				centerLine(1,"<-- SELECT -->");
+
+				if(nLCDButtons == LCD_LEFT_BUTTON) {
+					waitForRelease();
+					choice = choice==0?numberAutons-1:choice-1;
+				} else if(nLCDButtons == LCD_RIGHT_BUTTON) {
+					waitForRelease();
+					choice = choice==numberAutons-1?0:choice+1;
 				}
+
+				delay(25);
 			}
 			waitForRelease();
 			autonomousChoice = choice;

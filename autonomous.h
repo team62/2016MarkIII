@@ -7,6 +7,18 @@ pid r;
 
 int maxSpeed = 100;
 
+int numberAutons = 7;
+
+string autonomousMenu[7] = {
+	"fourBalls",
+	"rSCurveAuto",
+	"rAngleShotAuto",
+	"rFourCross",
+	"lSCurveAuto",
+	"lAngleShotAuto",
+	"lFourCross"
+};
+
 task drivebasePID () {
 
 	double kP = 0.1;

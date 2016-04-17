@@ -3,14 +3,33 @@ void resetEncoders() {
 	nMotorEncoder(rightWheel13) = 0;
 }
 
-void autonomousInit() {
-	init();
+flywheelShot autonomous2;
 
+void autonomousInit() {
+	//failsafe - ensure robot is properly initialsied
+  init();
+
+  //clear the encoders before start of autonomous
 	resetEncoders();
 
+
+  //clear drivebase PID targets to prevent robot from running off anywhere
 	l.target = 0;
 	r.target = 0;
 
+
+  //autonomous2 shot for the angled shot in angleShotAuto, based off midShot
+	autonomous2.velocity           = midShot.velocity - 100;
+	autonomous2.highSpeed          = midShot.highSpeed;
+	autonomous2.lowSpeed 			     = midShot.lowSpeed;
+	autonomous2.ramp 				       = midShot.ramp;
+	autonomous2.wait 				       = midShot.wait;
+	autonomous2.kP 					       = midShot.kP;
+	autonomous2.velocityShot 		   = midShot.velocityShot;
+	autonomous2.velocityThreshold  = midShot.velocityThreshold;
+
+
+  //ensure intake won't do anything stupid
 	intakeAutonomousIndexer = false;
 	intakeAutonomousIntake = false;
 	intakeAutonomousShoot = false;
@@ -18,60 +37,98 @@ void autonomousInit() {
 	startTask(drivebasePID);
 }
 
+//Shoots four balls into net, can be called from other autonomous methods
+void fourBalls() {
+	startTask(intakeControl);
+	startFlywheel(longShot);
+  //wait a bit to aviod shooting ball prematurely - flywheel can have tendancy to briefly load balls before flywheel has started spinning, jamming flywheel
+	wait1Msec(1000);
+	intakeAutonomousIndexer = true;
+	intakeAutonomousIntake = true;
+	intakeAutonomousShoot = true;
+
+  //enough time to shoot ball
+  wait1Msec(4000);
+
+	intakeAutonomousIndexer = false;
+	intakeAutonomousIntake = false;
+	intakeAutonomousShoot = false;
+	stopFlywheel();
+}
+
 //smack into bar and pipe shot
-void rightAutonomous1 () {
+void rSCurveAuto () {
 	autonomousInit();
-	startFlywheel(pipeShot);
-	addTarget(800,800,90);
+	startFlywheel(pipeShot); //start to spin up flywheel as we drive across
+	addTarget(800,800,90); //begin to drive forward
 	wait1Msec(900);
+
+  //S Curve
 	addTargetNoIntegral(600,1000,100);
 	wait1Msec(800);
 	addTargetNoIntegral(1000,600,100);
-	intakeAutonomousIntake = true;
+	intakeAutonomousIntake = true; //start spinning intake
 	wait1Msec(800);
-	addTargetNoIntegral(1200, 1200, 30);
+	addTargetNoIntegral(1200, 1200, 30); //finish driving straight
 	wait1Msec(500);
+
+  //shoot the balls
 	intakeAutonomousIndexer = true;
 	intakeAutonomousShoot = true;
 	wait1Msec(500);
-	addTarget(0);
+	addTarget(0); //stop the drivebase
 	wait1Msec(2000);
 
-	resetEncoders();
-	addTarget(0,-450);
-	stopFlywheel();
+  //return towards protected zone
+	resetEncoders(); //for some reason, this helps
+	addTarget(0,-450); //swing turn, align paralell with pipe
+	stopFlywheel(); //we don't need the flywheel anymore
+
+  //stop shooting
 	intakeAutonomousIntake = false;
 	intakeAutonomousIndexer = false;
 	intakeAutonomousShoot = false;
+
 	wait1Msec(2000);
 	addTarget(0);
 	wait1Msec(200);
 	addTarget(400);
 	wait1Msec(1500);
-	addTarget(800,-0);
+	addTarget(800,-0); //swing turn, align to push stacks towards our protected zone
 	wait1Msec(700);
-	stopTask(intakeControl);
+
+  //spit out any balls
+	stopTask(intakeControl); //stop intake control task so that the intake can be controlled directly
 	motor[intake] = -127;
 	motor[indexer] = -127;
-	addTarget(900, 900, 90);
+
+	addTarget(800, 800, 90); //drive back towards protected zone to push stax
 	wait1Msec(1300);
+	addTarget(0);
+	wait1Msec(500);
+	addTarget(-800); //reverse back to starting position
+	wait1Msec(1300);
+
+  //shutdown, stop movement
 	stopTask(drivebasePID);
 	setWheelSpeed(0);
-	startTask(intakeControl);
+
+	startTask(intakeControl); //failsafe - ensure that when usercontrol starts, we aren't without intake
 }
 
-void leftAutonomous1 () {
+//mirrors rSCurveAuto()
+void lSCurveAuto () {
 	autonomousInit();
 	startFlywheel(pipeShot);
 	addTarget(800,800,90);
 	wait1Msec(900);
-	addTargetNoIntegral(1000,600,100);
+	addTargetNoIntegral(1000,600,70);
 	wait1Msec(800);
-	addTargetNoIntegral(600,1000,100);
+	addTargetNoIntegral(600,1000,70);
 	intakeAutonomousIntake = true;
 	wait1Msec(800);
 	addTargetNoIntegral(1200, 1200, 30);
-	wait1Msec(500);
+	wait1Msec(700);
 	intakeAutonomousIndexer = true;
 	intakeAutonomousShoot = true;
 	wait1Msec(500);
@@ -87,42 +144,53 @@ void leftAutonomous1 () {
 	wait1Msec(2000);
 	addTarget(0);
 	wait1Msec(200);
-	addTarget(400);
+	addTarget(600);
 	wait1Msec(1500);
 	addTarget(0,800);
 	wait1Msec(700);
 	stopTask(intakeControl);
 	motor[intake] = -127;
 	motor[indexer] = -127;
-	addTarget(900, 900, 90);
+	addTarget(800, 800, 90);
+	wait1Msec(1300);
+	addTarget(0);
+	wait1Msec(500);
+	addTarget(-800);
 	wait1Msec(1300);
 	stopTask(drivebasePID);
 	setWheelSpeed(0);
 	startTask(intakeControl);
 }
 
-void rightAutonomous2 () {
+//get stack, shoot, go across field
+void rAngleShotAuto () {
 	autonomousInit();
-	startFlywheel(midShot);
+	startFlywheel(autonomous2); //start flywheel to custom shot for angle
 
-	addTargetNoIntegral(1000, 1000, 70);
-	intakeAutonomousIntake = true;
+	addTargetNoIntegral(1000, 1000, 60); //drive forward to stack towards the bottom of the "box"
+	intakeAutonomousIntake = true; //intake stax
 	wait1Msec(2000);
-	addTarget(0,400);
+
+	addTarget(0,380); //swing turn to align with goal
 	wait1Msec(600);
-	intakeAutonomousShoot = true;
+
+  //shoot stack	
+  intakeAutonomousShoot = true;
 	intakeAutonomousIndexer = true;
 	addTarget(0);
-	wait1Msec(2000);
+	wait1Msec(2000); //amt of time to shoot four balls
 	intakeAutonomousShoot = false;
 	intakeAutonomousIndexer = false;
-	stopFlywheel();
-	addTarget(-250,250);
+	stopFlywheel(); //dont waste
+
+	addTarget(-250,250); //point turn to get contested stack on opponent's side, near the side wall
 	wait1Msec(1000);
-	addTarget(1100,1100);
+	addTarget(1100,1100); //drive to stack
 	wait1Msec(2000);
-	addTarget(500, 500, 20);
+	addTarget(500, 500, 20); //drive slowly to properly intake stack
 	wait1Msec(3000);
+
+  //stop movement
 	addTarget(0);
 	setWheelSpeed(0);
 	intakeAutonomousIndexer = false;
@@ -130,14 +198,15 @@ void rightAutonomous2 () {
 	intakeAutonomousIntake = false;
 }
 
-void leftAutonomous2 () {
+//mirrors rAngleShotAuto()
+void lAngleShotAuto () {
 	autonomousInit();
-	startFlywheel(midShot);
+	startFlywheel(autonomous2);
 
-	addTargetNoIntegral(1000, 1000, 70);
+	addTargetNoIntegral(1000, 1000, 60);
 	intakeAutonomousIntake = true;
 	wait1Msec(2000);
-	addTarget(400,0);
+	addTarget(360,0);
 	wait1Msec(600);
 	intakeAutonomousShoot = true;
 	intakeAutonomousIndexer = true;
@@ -150,11 +219,43 @@ void leftAutonomous2 () {
 	wait1Msec(1000);
 	addTarget(1100,1100);
 	wait1Msec(2000);
-	addTarget(500, 500, 20);
+	addTargetNoIntegral(500, 520, 20);
 	wait1Msec(3000);
 	addTarget(0);
 	setWheelSpeed(0);
 	intakeAutonomousIndexer = false;
 	intakeAutonomousShoot = false;
 	intakeAutonomousIntake = false;
+}
+
+//shoot four and then go in front of other protected zone
+void rFourCross () {
+	autonomousInit();
+
+	fourBalls(); //shoot four balls
+	
+	addTarget(0,250); //swing turn to go in front of opponent's protected zone
+	wait1Msec(1000);
+	intakeAutonomousIntake = true; //intake on our way
+	addTarget(1500);
+	wait1Msec(2000);
+
+  //stop movement
+	addTarget(0);
+	setWheelSpeed(0);
+}
+
+//shoot four and then go in front of other protected zone
+//mirrors rFourCross
+void lFourCross () {
+	autonomousInit();
+	fourBalls();
+	startTask(drivebasePID);
+	addTarget(250,0);
+	wait1Msec(1000);
+	intakeAutonomousIntake = true;
+	addTarget(1500);
+	wait1Msec(2000);
+	addTarget(0);
+	setWheelSpeed(0);
 }

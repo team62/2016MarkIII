@@ -52,21 +52,21 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 5300;
+	longShot.velocity = 5330;
 	longShot.highSpeed = 100;
 	longShot.lowSpeed = 35;
 	longShot.ramp = 0;
 	longShot.wait = 300;
 	longShot.kP = 0.07;
 	longShot.velocityShot = true;
-	longShot.velocityThreshold = 50;
+	longShot.velocityThreshold = 40;
 
 	midShot.velocity = 4330;
 	midShot.highSpeed = 100;
 	midShot.lowSpeed = 35;
 	midShot.ramp = 0;
 	midShot.wait = 0;
-	midShot.kP = 0.05;
+	midShot.kP = 0.07;
 	midShot.velocityShot = false;
 
 	pipeShot.velocity = 3800;
@@ -94,12 +94,12 @@ int flywheelControlUpdateFrequency = flywheelVelocityUpdateFrequency;
 int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
 int intakeShootVelocityThreshold = 50;
-int intakeLightThreshold = 1300;
+int intakeLightThreshold = 2500;
 bool intakeAutonomousIntake;
 bool intakeAutonomousIndexer;
 bool intakeAutonomousShoot;
 
-int autonomousChoice;
+int autonomousChoice = -1;
 
 #include "JonLib/Drivebase.h"
 #include "JonLib/PID.h"
@@ -372,12 +372,14 @@ void pre_auton() {
 #include "autonomousPrograms.h"
 task autonomous() {
 	switch (autonomousChoice) {
-		case 0: rightAutonomous1
-		case 1:	leftAutonomous1
-		case 2:
-		case 3:
+		case 0: fourBalls();			break;
+		case 1:	rSCurveAuto();		break;
+		case 2:	rAngleShotAuto();	break;
+		case 3: rFourCross(); 		break;
+		case 4: lSCurveAuto();		break;
+		case 5:	lAngleShotAuto(); break;
+		case 6: lFourCross();			break;
 	}
-	leftAutonomous2();
 }
 
 task usercontrol() {
