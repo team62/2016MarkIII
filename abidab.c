@@ -63,10 +63,10 @@ void flywheelShots() {
 
 	midShot.velocity = 4330;
 	midShot.highSpeed = 100;
-	midShot.lowSpeed = 35;
+	midShot.lowSpeed = 40;
 	midShot.ramp = 0;
 	midShot.wait = 0;
-	midShot.kP = 0.07;
+	midShot.kP = 0.05;
 	midShot.velocityShot = false;
 
 	pipeShot.velocity = 3800;
