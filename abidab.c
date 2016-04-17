@@ -71,10 +71,10 @@ void flywheelShots() {
 
 	pipeShot.velocity = 3800;
 	pipeShot.highSpeed = 100;
-	pipeShot.lowSpeed = 35;
+	pipeShot.lowSpeed = 40;
 	pipeShot.ramp = 0;
 	pipeShot.wait = 0;
-	pipeShot.kP = 0.07;
+	pipeShot.kP = 0.05;
 	pipeShot.velocityShot = false;
 
 	holdShot.velocity = 300;
@@ -94,7 +94,7 @@ int flywheelControlUpdateFrequency = flywheelVelocityUpdateFrequency;
 int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
 int intakeShootVelocityThreshold = 50;
-int intakeLightThreshold = 2500;
+int intakeLightThreshold = 2500; //higher is more sensitive
 bool intakeAutonomousIntake;
 bool intakeAutonomousIndexer;
 bool intakeAutonomousShoot;
