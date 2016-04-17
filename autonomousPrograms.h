@@ -105,8 +105,56 @@ void rightAutonomous2 () {
 	autonomousInit();
 	startFlywheel(midShot);
 
-	addTargetNoIntegral(1000, 1150, 50);
+	addTargetNoIntegral(1000, 1000, 70);
 	intakeAutonomousIntake = true;
-	wait1Msec(2500);
+	wait1Msec(2000);
+	addTarget(0,400);
+	wait1Msec(600);
+	intakeAutonomousShoot = true;
+	intakeAutonomousIndexer = true;
 	addTarget(0);
+	wait1Msec(2000);
+	intakeAutonomousShoot = false;
+	intakeAutonomousIndexer = false;
+	stopFlywheel();
+	addTarget(-250,250);
+	wait1Msec(1000);
+	addTarget(1100,1100);
+	wait1Msec(2000);
+	addTarget(500, 500, 20);
+	wait1Msec(3000);
+	addTarget(0);
+	setWheelSpeed(0);
+	intakeAutonomousIndexer = false;
+	intakeAutonomousShoot = false;
+	intakeAutonomousIntake = false;
+}
+
+void leftAutonomous2 () {
+	autonomousInit();
+	startFlywheel(midShot);
+
+	addTargetNoIntegral(1000, 1000, 70);
+	intakeAutonomousIntake = true;
+	wait1Msec(2000);
+	addTarget(400,0);
+	wait1Msec(600);
+	intakeAutonomousShoot = true;
+	intakeAutonomousIndexer = true;
+	addTarget(0);
+	wait1Msec(2000);
+	intakeAutonomousShoot = false;
+	intakeAutonomousIndexer = false;
+	stopFlywheel();
+	addTarget(250,-250);
+	wait1Msec(1000);
+	addTarget(1100,1100);
+	wait1Msec(2000);
+	addTarget(500, 500, 20);
+	wait1Msec(3000);
+	addTarget(0);
+	setWheelSpeed(0);
+	intakeAutonomousIndexer = false;
+	intakeAutonomousShoot = false;
+	intakeAutonomousIntake = false;
 }

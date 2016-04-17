@@ -371,7 +371,13 @@ void pre_auton() {
 
 #include "autonomousPrograms.h"
 task autonomous() {
-	rightAutonomous2();
+	switch (autonomousChoice) {
+		case 0: rightAutonomous1
+		case 1:	leftAutonomous1
+		case 2:
+		case 3:
+	}
+	leftAutonomous2();
 }
 
 task usercontrol() {
