@@ -48,7 +48,7 @@ void fourBalls() {
 	intakeAutonomousShoot = true;
 
   //enough time to shoot ball
-  wait1Msec(4000);
+  wait1Msec(5000);
 
 	intakeAutonomousIndexer = false;
 	intakeAutonomousIntake = false;
@@ -92,7 +92,7 @@ void rSCurveAuto () {
 	wait1Msec(2000);
 	addTarget(0);
 	wait1Msec(200);
-	addTarget(400);
+	addTarget(500);
 	wait1Msec(1500);
 	addTarget(800,-0); //swing turn, align to push stacks towards our protected zone
 	wait1Msec(700);
@@ -144,9 +144,9 @@ void lSCurveAuto () {
 	wait1Msec(2000);
 	addTarget(0);
 	wait1Msec(200);
-	addTarget(600);
+	addTarget(450);
 	wait1Msec(1500);
-	addTarget(0,800);
+	addTarget(0,850);
 	wait1Msec(700);
 	stopTask(intakeControl);
 	motor[intake] = -127;
@@ -174,7 +174,7 @@ void rAngleShotAuto () {
 	addTarget(0,380); //swing turn to align with goal
 	wait1Msec(600);
 
-  //shoot stack	
+  //shoot stack
   intakeAutonomousShoot = true;
 	intakeAutonomousIndexer = true;
 	addTarget(0);
@@ -206,7 +206,7 @@ void lAngleShotAuto () {
 	addTargetNoIntegral(1000, 1000, 60);
 	intakeAutonomousIntake = true;
 	wait1Msec(2000);
-	addTarget(360,0);
+	addTarget(380,0);
 	wait1Msec(600);
 	intakeAutonomousShoot = true;
 	intakeAutonomousIndexer = true;
@@ -233,8 +233,8 @@ void rFourCross () {
 	autonomousInit();
 
 	fourBalls(); //shoot four balls
-	
-	addTarget(0,250); //swing turn to go in front of opponent's protected zone
+
+	addTarget(0,265); //swing turn to go in front of opponent's protected zone
 	wait1Msec(1000);
 	intakeAutonomousIntake = true; //intake on our way
 	addTarget(1500);
@@ -251,7 +251,7 @@ void lFourCross () {
 	autonomousInit();
 	fourBalls();
 	startTask(drivebasePID);
-	addTarget(250,0);
+	addTarget(265,0);
 	wait1Msec(1000);
 	intakeAutonomousIntake = true;
 	addTarget(1500);

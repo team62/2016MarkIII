@@ -54,7 +54,7 @@ flywheelShot currentShot;
 void flywheelShots() {
 	longShot.velocity = 5330;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 40;
+	longShot.lowSpeed = 45;
 	longShot.ramp = 0;
 	longShot.wait = 300;
 	longShot.kP = 0.05;
@@ -282,7 +282,7 @@ task intakeControl () {
 			if(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
+				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
 				clearTimer(T1);
 			}
 			else {
@@ -305,7 +305,7 @@ task intakeControl () {
 		else
 			motor[indexer] = 0;
 
-		delay(10);
+		delay(25);
 	}
 }
 
