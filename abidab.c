@@ -54,10 +54,10 @@ flywheelShot currentShot;
 void flywheelShots() {
 	longShot.velocity = 5330;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 35;
+	longShot.lowSpeed = 40;
 	longShot.ramp = 0;
 	longShot.wait = 300;
-	longShot.kP = 0.07;
+	longShot.kP = 0.05;
 	longShot.velocityShot = true;
 	longShot.velocityThreshold = 40;
 
@@ -66,7 +66,7 @@ void flywheelShots() {
 	midShot.lowSpeed = 40;
 	midShot.ramp = 0;
 	midShot.wait = 0;
-	midShot.kP = 0.05;
+	midShot.kP = 0.04;
 	midShot.velocityShot = false;
 
 	pipeShot.velocity = 3800;
