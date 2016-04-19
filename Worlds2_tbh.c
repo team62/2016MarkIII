@@ -407,18 +407,29 @@ task autonomous() {
 
 task usercontrol() {
 
-	init();
+
+	//init();
 
 	while (true) {
+		motor[flywheel1] = 55;
+		motor[flywheel2] = 55;
+		motor[flywheel3] = 55;
+		motor[flywheel4] = 55;
+				if(vexRT(Btn6U)){
+			motor[intake] = 100;
+			motor[indexer] = 100;
+		}
 
 		if(!debugDrivebaseActive)
 			logDrive();
 
-		if(vexRT(Btn8U)) {
-			FwVelocitySet( &flywheel, 50, 0.2 );
-			while(vexRT(Btn8U)) { delay(10); }
-		}
+		//if(vexRT(Btn8U)){
 
+	//}
+		//FwVelocitySet( &flywheel, 50, 0.2 );
+		//	while(vexRT(Btn8U)) { delay(10); }
+		//}
+/*
 		else if(vexRT(Btn8R)) {
 			FwVelocitySet( &flywheel, 120, 0.38 );
 			while(vexRT(Btn8R)) { delay(10); }
@@ -435,5 +446,5 @@ task usercontrol() {
 
 		else if(vexRT(Btn8D))
 			stopFlywheel();
-	}
+	*/}
 }
