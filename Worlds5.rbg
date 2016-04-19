@@ -58,12 +58,12 @@ void flywheelShots() {
 	longShot.ramp = 0;
 	longShot.wait = 330; //prevents double shooting
 	longShot.kP = 0.06;
-	longShot.velocityShot = true;
+	longShot.velocityShot = false;
 	longShot.velocityThreshold = 35;
 
 	midShot.velocity = 4450;
 	midShot.highSpeed = 100;
-	midShot.lowSpeed = 40;
+	midShot.lowSpeed = 45;
 	midShot.ramp = 0;
 	midShot.wait = 0;
 	midShot.kP = 0.07;
@@ -279,10 +279,11 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			if(/*(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) &&*/ flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
+				//while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
+				wait1Msec(50);
 				clearTimer(T1);
 			}
 			else {
