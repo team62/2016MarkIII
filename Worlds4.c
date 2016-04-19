@@ -282,7 +282,7 @@ task intakeControl () {
 			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
+				delay(50);
 				clearTimer(T1);
 			}
 			else {
