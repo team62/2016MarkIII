@@ -52,26 +52,26 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 5550;
+	longShot.velocity = 5500;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 50;
+	longShot.lowSpeed = 45;
 	longShot.ramp = 0;
-	longShot.wait = 1000; //prevents double shooting
-	longShot.kP = 0.06;
-	longShot.velocityShot = false;   //ok - 1 sec
-	longShot.velocityThreshold = 35; //ok it works actually perfectly other than sometimes letting 2 fire through and missing the switch very fast
+	longShot.wait = 250; //prevents double shooting
+	longShot.kP = 0.05;
+	longShot.velocityShot = true;
+	longShot.velocityThreshold = 35;
 
-	midShot.velocity = 4450;
+	midShot.velocity = 4330;
 	midShot.highSpeed = 100;
-	midShot.lowSpeed = 45;
+	midShot.lowSpeed = 40;
 	midShot.ramp = 0;
 	midShot.wait = 0;
-	midShot.kP = 0.07;
+	midShot.kP = 0.04;
 	midShot.velocityShot = false;
 
 	pipeShot.velocity = 3800;
 	pipeShot.highSpeed = 100;
-	pipeShot.lowSpeed = 45;
+	pipeShot.lowSpeed = 40;
 	pipeShot.ramp = 0;
 	pipeShot.wait = 0;
 	pipeShot.kP = 0.07;
@@ -279,11 +279,10 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if(/*(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) &&*/ flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				//while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
-				wait1Msec(75);
+				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
 				clearTimer(T1);
 			}
 			else {
