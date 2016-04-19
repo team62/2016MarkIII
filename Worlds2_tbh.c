@@ -31,7 +31,6 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-
 bool debugMode = true;
 bool debugDrivebaseActive = false;
 bool debugFlywheelActive = false;
@@ -67,6 +66,13 @@ void setLeftWheelSpeed ( int speed ) {
 void setRightWheelSpeed ( int speed ) {
 	motor[rightWheel13] = speed;
 	motor[rightWheel2] = speed;
+}
+
+void setFlywheel (int speed) {
+	motor[flywheel1] = speed;
+	motor[flywheel2] = speed;
+	motor[flywheel3] = speed;
+	motor[flywheel4] = speed;
 }
 
 //Logarithmic drivebase control
@@ -131,9 +137,7 @@ static  fw_controller   flywheel;
 void
 FwMotorSet( int value )
 {
-    motor[ Motor_FW1 ] = value;
-    motor[ Motor_FW2 ] = value;
-    motor[ Motor_FW3 ] = value;
+    setFlywheel(value);
 }
 
 /*-----------------------------------------------------------------------------*/
@@ -142,7 +146,7 @@ FwMotorSet( int value )
 long
 FwMotorEncoderGet()
 {
-    return( nMotorEncoder[ Motor_FW1 ] );
+    return( sensorValue[flywheelEncoder] );
 }
 
 /*-----------------------------------------------------------------------------*/
@@ -281,35 +285,6 @@ FwControlTask()
         }
 }
 
-#warning "startFlywheel"
-void startFlywheel (flywheelShot shot) {
-	currentShot.velocity = shot.velocity;
-	currentShot.highSpeed = shot.highSpeed;
-	currentShot.lowSpeed = shot.lowSpeed;
-	currentShot.ramp = shot.ramp;
-	currentShot.wait = shot.wait;
-	currentShot.kP = shot.kP;
-	currentShot.velocityShot = shot.velocityShot;
-	currentShot.velocityThreshold = shot.velocityThreshold;
-	if(flywheelVelocity >= 0)
-		startTask(flywheelControl, kHighPriority);
-	else
-		setFlywheel(0);
-}
-
-void startFlywheel (int targetVelocity, int lowSpeed, int highSpeed, int rampThreshold, int waitTime = 0, float kP = 0.07, bool velocityShot = false, int velocityThreshold = 50) {
-	flywheelShot tempShot;
-	tempShot.velocity = targetVelocity;
-	tempShot.lowSpeed = lowSpeed;
-	tempShot.highSpeed = highSpeed;
-	tempShot.ramp = rampThreshold;
-	tempShot.wait = waitTime;
-	tempShot.kP = kP;
-	tempShot.velocityShot = velocityShot;
-	tempShot.velocityThreshold = velocityThreshold;
-	startFlywheel(tempShot);
-}
-
 #warning "stopFlywheel"
 void stopFlywheel () {
 	stopTask(FwControlTask);
@@ -329,7 +304,7 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			if(true) {//(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
 				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
@@ -386,8 +361,6 @@ task reverseFlywheel () {
 	}
 }
 
-#include "LCD.c"
-
 #warning "init"
 void init() {
 	playTone(700,10);
@@ -411,7 +384,6 @@ void init() {
 	startTask(intakeControl, kHighPriority);
 	startTask( FwControlTask );
 	startTask(reverseFlywheel);
-	startTask(LCD);
 }
 
 void pre_auton() {
@@ -419,9 +391,9 @@ void pre_auton() {
 	bStopTasksBetweenModes = true;
 }
 
-#include "autonomousPrograms.h"
+//#include "autonomousPrograms.h"
 task autonomous() {
-	switch (autonomousChoice) {
+	/*switch (autonomousChoice) {
 		case 0: fourBalls();			break;
 		case 1:	rSCurveAuto();		break;
 		case 2:	rAngleShotAuto();	break;
@@ -430,6 +402,7 @@ task autonomous() {
 		case 5:	lAngleShotAuto(); break;
 		case 6: lFourCross();			break;
 	}
+	*/
 }
 
 task usercontrol() {
@@ -454,12 +427,6 @@ task usercontrol() {
 		else if(vexRT(Btn8L)) {
 			FwVelocitySet( &flywheel, 144, 0.55 );
 			while(vexRT(Btn8L)) { delay(10); }
-		}
-
-		else if(vexRT(Btn7D)) {
-			//startFlywheel(holdShot);
-			startFlywheel(200, 30, 60, 10, 0);
-			while(vexRT(Btn7D)) { delay(10); }
 		}
 
 		// for debugging - consider removing
