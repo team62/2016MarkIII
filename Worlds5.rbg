@@ -52,21 +52,21 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 5180;
+	longShot.velocity = 5550;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 45;
+	longShot.lowSpeed = 50;
 	longShot.ramp = 0;
-	longShot.wait = 1000; //prevents double shooting
-	longShot.kP = 0.05;
-	longShot.velocityShot = false;
-	longShot.velocityThreshold = 40;
+	longShot.wait = 330; //prevents double shooting
+	longShot.kP = 0.06;
+	longShot.velocityShot = true;
+	longShot.velocityThreshold = 35;
 
-	midShot.velocity = 4330;
+	midShot.velocity = 4450;
 	midShot.highSpeed = 100;
 	midShot.lowSpeed = 40;
 	midShot.ramp = 0;
 	midShot.wait = 0;
-	midShot.kP = 0.04;
+	midShot.kP = 0.07;
 	midShot.velocityShot = false;
 
 	pipeShot.velocity = 3800;
@@ -74,7 +74,7 @@ void flywheelShots() {
 	pipeShot.lowSpeed = 40;
 	pipeShot.ramp = 0;
 	pipeShot.wait = 0;
-	pipeShot.kP = 0.05;
+	pipeShot.kP = 0.07;
 	pipeShot.velocityShot = false;
 
 	holdShot.velocity = 300;
@@ -268,7 +268,6 @@ void stopFlywheel () {
 
 #warning "intakeControl"
 task intakeControl () {
-	s timer2
 	while(true) {
 		motor[intake] = ((vexRT(Btn5U)||intakeAutonomousIntake)-vexRT(Btn5D))*127;
 
@@ -280,14 +279,14 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if(time1[T2]>currentShot.wait) {
+			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				delay(75);//wait to let it shoot before checking again
-				clearTimer(T2);
+				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
+				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?-5:127;
+				motor[indexer] = (SensorValue[indexHigh])?0:127;
 			}
 		}
 
@@ -297,7 +296,7 @@ task intakeControl () {
 
 		//Stop ball if ball is at a sensor
 		else if(SensorValue[indexLow]<intakeLightThreshold && !SensorValue[indexHigh]) {
-			motor[indexer] = 60;
+			motor[indexer] = 70;
 			clearTimer(T2);
 			while(time1[T2] < intakeMoveUpTime && !SensorValue[indexHigh]) { delay(20); }
 			motor[indexer] = 0;
