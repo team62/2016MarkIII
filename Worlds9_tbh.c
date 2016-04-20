@@ -326,15 +326,15 @@ task intakeControl () {
 }
 
 void incrementFlywheel (fw_controller *fw, int change = 1) {
-	if(fw.current == flywheelPipeShot) {
+	if(fw->current == flywheelPipeShot) {
 		flywheelPipeShot+=change;
-		fw.target+=change;
-	} else if (fw.current == flywheelMidShot) {
+		fw->target+=change;
+	} else if (fw->current == flywheelMidShot) {
 		flywheelMidShot+=change;
-		fw.target+=change;
-	} else if (fw.current == flywheelLongShot) {
+		fw->target+=change;
+	} else if (fw->current == flywheelLongShot) {
 		flywheelLongShot+=change;
-		fw.target+=change;
+		fw->target+=change;
 	}
 }
 
