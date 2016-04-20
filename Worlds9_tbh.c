@@ -377,6 +377,8 @@ void startFlywheel (int velocity, float predicted) {
 void init() {
 	playTone(700,10);
 
+	startTask(LCD);
+
 	clearDebugStream();
 
 	intakeAutonomousIndexer = false;
@@ -414,7 +416,6 @@ task autonomous() {
 }
 
 task usercontrol() {
-
 
 	init();
 
