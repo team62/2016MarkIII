@@ -169,7 +169,6 @@ FwVelocitySet( fw_controller *fw, int velocity, float predicted_drive )
 void
 FwCalculateSpeed( fw_controller *fw )
 {
-		fw_controller *fw = &flywheel;
 
     int     delta_ms;
     int     delta_enc;
@@ -326,7 +325,7 @@ task intakeControl () {
 	}
 }
 
-void incrementFlywheel (int change = 1) {
+void incrementFlywheel (fw_controller *fw, int change = 1) {
 	if(fw.current == flywheelPipeShot) {
 		flywheelPipeShot+=change;
 		fw.target+=change;
@@ -445,12 +444,12 @@ task usercontrol() {
 			stopFlywheel();
 
 		if(vexRT(Btn7U)) {
-			incrementFlywheel(flywheelIncrement);
+			incrementFlywheel(&flywheel, flywheelIncrement);
 			while(vexRT(Btn7U)) { delay(5); }
 		}
 
 		else if(vexRT(Btn7D)) {
-			incrementFlywheel(-flywheelIncrement);
+			incrementFlywheel(&flywheel, -flywheelIncrement);
 			while(vexRT(Btn7D)) { delay(5); }
 		}
 	}
