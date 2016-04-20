@@ -171,15 +171,18 @@ void testShot () {
 		intakeAutonomousIndexer = true;
 		intakeAutonomousIntake = true;
 		if(nLCDButtons == LCD_LEFT_BUTTON) {
-			startFlywheel(midShot);
+			startFlywheel(flywheelMidShot, 0.0);
 			waitForRelease();
 		} else if (nLCDButtons == LCD_CENTRE_BUTTON) {
-			startFlywheel(longShot);
+			startFlywheel(flywheelLongShot, flywheelLongPredictedDrive);
 			waitForRelease();
 		}
 		delay(25);
 	}
 	stopFlywheel();
+
+
+	
 	intakeAutonomousShoot = false;
 	intakeAutonomousIndexer = false;
 	intakeAutonomousIntake = false;

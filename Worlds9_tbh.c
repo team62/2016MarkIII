@@ -31,15 +31,22 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-bool debugMode = false;
+bool debugMode = true;
 bool debugDrivebaseActive = false;
 bool debugFlywheelActive = false;
 
 int flywheelVelocity;
 int flywheelVelocityUpdateFrequency = 25;
-int flywheelReverseStartThreshold = 10;
+int flywheelReverseStartThreshold = 5;
 int flywheelSlowDownVelocity = 4000;
 int flywheelControlUpdateFrequency = flywheelVelocityUpdateFrequency;
+int flywheelIncrement = 3;
+int flywheelPipeShot = 310;
+int flywheelMidShot = 350;
+int flywheelLongShot = 420;
+bool flywheelForward = true;
+float flywheelLongPredictedDrive = 0.7;
+
 
 int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
@@ -162,6 +169,8 @@ FwVelocitySet( fw_controller *fw, int velocity, float predicted_drive )
 void
 FwCalculateSpeed( fw_controller *fw )
 {
+		fw_controller *fw = &flywheel;
+
     int     delta_ms;
     int     delta_enc;
 
@@ -232,7 +241,7 @@ FwControlTask()
     fw_controller *fw = &flywheel;
 
     // Set the gain
-    fw->gain = 0.99;//.5 for mid shot
+    fw->gain = 0.05;
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -243,8 +252,8 @@ FwControlTask()
         // debug counter
         fw->counter++;
 
-        // Calculate velocity
-        FwCalculateSpeed( fw );
+				// Calculate velocity
+				FwCalculateSpeed( fw );
 
         // Set current speed for the tbh calculation code
         fw->current = fw->v_current;
@@ -286,15 +295,15 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			//if(intakeLongShot?(abs(flywheel.target-flywheel.current)<1):true) {
-			if(time1[T1]>400 || !intakeLongShot) {
+			//if(intakeLongShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true)) {
+			if(time1[T1]>300 || !intakeLongShot) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				wait1Msec(130);
+				wait1Msec(150);
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?-5:80;
+				motor[indexer] = (SensorValue[indexHigh])?0:127;
 			}
 		}
 
@@ -317,13 +326,26 @@ task intakeControl () {
 	}
 }
 
+void incrementFlywheel (int change = 1) {
+	if(fw.current == flywheelPipeShot) {
+		flywheelPipeShot+=change;
+		fw.target+=change;
+	} else if (fw.current == flywheelMidShot) {
+		flywheelMidShot+=change;
+		fw.target+=change;
+	} else if (fw.current == flywheelLongShot) {
+		flywheelLongShot+=change;
+		fw.target+=change;
+	}
+}
+
 task reverseFlywheel () {
 	while(true) {
-		if(vexRT(Btn7L) && flywheelVelocity > flywheelReverseStartThreshold) {
+		if(vexRT(Btn7L) && motor[flywheel4]>0) {
 			stopFlywheel();
 			clearLCDLine(1);
 			while(flywheelVelocity>0) {
-				setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.3));
+				//setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.3));
 				clearLCDLine(0);
 				displayLCDNumber(0,0,flywheelVelocity);
 				displayLCDNumber(0,10,motor[flywheel1]);
@@ -345,11 +367,12 @@ task reverseFlywheel () {
 }
 
 void startFlywheel (int velocity, float predicted) {
+	if(motor[flywheel4]<0) {
+		stopFlywheel();
+	}
 	startTask(FwControlTask);
 	FwVelocitySet( &flywheel, velocity, predicted );
 }
-
-#include "LCD.c"
 
 #warning "init"
 void init() {
@@ -378,7 +401,7 @@ void pre_auton() {
 	bStopTasksBetweenModes = true;
 }
 
-//#include "autonomousPrograms.h"
+#include "autonomousPrograms_tbh.h"
 task autonomous() {
 	switch (autonomousChoice) {
 		case 0: fourBalls();			break;
@@ -389,7 +412,6 @@ task autonomous() {
 		case 5:	lAngleShotAuto(); break;
 		case 6: lFourCross();			break;
 	}
-
 }
 
 task usercontrol() {
@@ -403,30 +425,33 @@ task usercontrol() {
 			logDrive();
 
 		if(vexRT(Btn8U)){
-			startFlywheel(310, 0.0 );
-
+			startFlywheel(flywheelPipeShot, 0.0 );
 			intakeLongShot = false;
 			while(vexRT(Btn8U)) { delay(10); }
 		}
 		else if(vexRT(Btn8R)) {
-			startFlywheel( 350, 0.0 );
-
+			startFlywheel(flywheelMidShot, 0.0 );
 			intakeLongShot = false;
 			while(vexRT(Btn8R)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8L)) {
-			startFlywheel( 420, 0.7 );
+			startFlywheel(flywheelLongShot, flywheelLongPredictedDrive );
 			intakeLongShot = true;
-
 			while(vexRT(Btn8L)) { delay(10); }
 		}
 
-		// for debugging - consider removing
-		else if(vexRT(Btn7U))
-			setFlywheel(60);
-
 		else if(vexRT(Btn8D))
 			stopFlywheel();
+
+		if(vexRT(Btn7U)) {
+			incrementFlywheel(flywheelIncrement);
+			while(vexRT(Btn7U)) { delay(5); }
+		}
+
+		else if(vexRT(Btn7D)) {
+			incrementFlywheel(-flywheelIncrement);
+			while(vexRT(Btn7D)) { delay(5); }
+		}
 	}
 }
