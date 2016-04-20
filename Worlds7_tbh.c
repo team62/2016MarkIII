@@ -45,6 +45,7 @@ int intakeMoveUpTime = 200;
 int intakeMoveDownTime = 250;
 int intakeShootVelocityThreshold = 50;
 int intakeLightThreshold = 2500; //higher is more sensitive
+bool intakeLongShot = false;
 bool intakeAutonomousIntake;
 bool intakeAutonomousIndexer;
 bool intakeAutonomousShoot;
@@ -285,7 +286,8 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if(time1[T1]>300) {
+			//if(intakeLongShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true)) {
+			if(time1[T1]>300 || !intakeLongShot) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
 				wait1Msec(85);
@@ -400,15 +402,18 @@ task usercontrol() {
 
 		if(vexRT(Btn8U)){
 			startFlywheel(50, 0.0 );
+			intakeLongShot = false;
 			while(vexRT(Btn8U)) { delay(10); }
 		}
 		else if(vexRT(Btn8R)) {
 			startFlywheel( 370, 0.0 );
+			intakeLongShot = false;
 			while(vexRT(Btn8R)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8L)) {
 			startFlywheel( 420, 0.0 );
+			intakeLongShot = true;
 			while(vexRT(Btn8L)) { delay(10); }
 		}
 
