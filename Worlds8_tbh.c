@@ -31,7 +31,7 @@
 
 #include "Vex_Competition_Includes.c"   //Main competition background code...do not modify!
 
-bool debugMode = true;
+bool debugMode = false;
 bool debugDrivebaseActive = false;
 bool debugFlywheelActive = false;
 
@@ -232,7 +232,7 @@ FwControlTask()
     fw_controller *fw = &flywheel;
 
     // Set the gain
-    fw->gain = 0.05;
+    fw->gain = 0.99;//.5 for mid shot
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -378,7 +378,7 @@ void pre_auton() {
 
 //#include "autonomousPrograms.h"
 task autonomous() {
-	/*switch (autonomousChoice) {
+	switch (autonomousChoice) {
 		case 0: fourBalls();			break;
 		case 1:	rSCurveAuto();		break;
 		case 2:	rAngleShotAuto();	break;
@@ -387,7 +387,7 @@ task autonomous() {
 		case 5:	lAngleShotAuto(); break;
 		case 6: lFourCross();			break;
 	}
-	*/
+
 }
 
 task usercontrol() {
@@ -402,18 +402,21 @@ task usercontrol() {
 
 		if(vexRT(Btn8U)){
 			startFlywheel(310, 0.0 );
+
 			intakeLongShot = false;
 			while(vexRT(Btn8U)) { delay(10); }
 		}
 		else if(vexRT(Btn8R)) {
-			startFlywheel( 370, 0.0 );
+			startFlywheel( 350, 0.0 );
+
 			intakeLongShot = false;
 			while(vexRT(Btn8R)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8L)) {
-			startFlywheel( 420, 0.0 );
+			startFlywheel( 420, 0.7 );
 			intakeLongShot = true;
+
 			while(vexRT(Btn8L)) { delay(10); }
 		}
 
