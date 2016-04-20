@@ -41,7 +41,7 @@ int flywheelReverseStartThreshold = 5;
 int flywheelSlowDownVelocity = 4000;
 int flywheelControlUpdateFrequency = flywheelVelocityUpdateFrequency;
 int flywheelIncrement = 3;
-int flywheelPipeShot = 310;
+int flywheelPipeShot = 300;
 int flywheelMidShot = 350;
 int flywheelLongShot = 420;
 bool flywheelForward = true;
@@ -240,7 +240,7 @@ FwControlTask()
     fw_controller *fw = &flywheel;
 
     // Set the gain
-    fw->gain = 0.05;
+    fw->gain = 0.99;
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -284,7 +284,7 @@ void stopFlywheel () {
 #warning "intakeControl"
 task intakeControl () {
 	while(true) {
-		motor[intake] = ((vexRT(Btn5U)||intakeAutonomousIntake)-vexRT(Btn5D))*127;
+		motor[intake] = ((vexRT(Btn5U)||intakeAutonomousIntake)-vexRT(Btn5D))*100;
 
 		//Move ball from high limit switch to low limit switch
 		if(vexRT(Btn6D) && SensorValue[indexHigh]) {
@@ -425,7 +425,7 @@ task usercontrol() {
 			logDrive();
 
 		if(vexRT(Btn8U)){
-			startFlywheel(flywheelPipeShot, 0.0 );
+			startFlywheel(flywheelPipeShot, 0.4 );
 			intakeLongShot = false;
 			while(vexRT(Btn8U)) { delay(10); }
 		}
@@ -446,12 +446,12 @@ task usercontrol() {
 
 		if(vexRT(Btn7U)) {
 			incrementFlywheel(&flywheel, flywheelIncrement);
-			while(vexRT(Btn7U)) { delay(5); }
+			while(vexRT(Btn7U)) { delay(15); }
 		}
 
 		else if(vexRT(Btn7D)) {
 			incrementFlywheel(&flywheel, -flywheelIncrement);
-			while(vexRT(Btn7D)) { delay(5); }
+			while(vexRT(Btn7D)) { delay(15); }
 		}
 	}
 }
