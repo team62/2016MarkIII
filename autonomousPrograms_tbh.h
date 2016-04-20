@@ -153,7 +153,7 @@ void lSCurveAuto () {
 //get stack, shoot, go across field
 void rAngleShotAuto () {
 	autonomousInit();
-	startFlywheel(autonomous2); //start flywheel to custom shot for angle
+	startFlywheel(&flywheel, autonomous2); //start flywheel to custom shot for angle
 
 	addTargetNoIntegral(1000, 1000, 60); //drive forward to stack towards the bottom of the "box"
 	intakeAutonomousIntake = true; //intake stax
@@ -189,7 +189,7 @@ void rAngleShotAuto () {
 //mirrors rAngleShotAuto()
 void lAngleShotAuto () {
 	autonomousInit();
-	startFlywheel(autonomous2);
+	startFlywheel(autonomous2, 0.0);
 
 	addTargetNoIntegral(1000, 1000, 60);
 	intakeAutonomousIntake = true;
