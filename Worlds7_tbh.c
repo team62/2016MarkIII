@@ -290,7 +290,7 @@ task intakeControl () {
 			if(time1[T1]>300 || !intakeLongShot) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				wait1Msec(85);
+				wait1Msec(150);
 				clearTimer(T1);
 			}
 			else {
