@@ -1,7 +1,7 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, in7,    indexLow,       sensorAnalog)
 #pragma config(Sensor, in8,    powerExpander,  sensorAnalog)
-#pragma config(Sensor, dgtl1,  flywheelEncoder, sensorQuadEncoder)
+#pragma config(Sensor, dgtl1,  flywheelEncoder, sensorRotation)
 #pragma config(Sensor, dgtl3,  indexHigh,      sensorTouch)
 #pragma config(Sensor, dgtl9,  upToSpeed,      sensorLEDtoVCC)
 #pragma config(Sensor, dgtl10, encoderTest,    sensorTouch)
@@ -231,7 +231,7 @@ FwControlTask()
     fw_controller *fw = &flywheel;
 
     // Set the gain
-    fw->gain = 0.00025;
+    fw->gain = 0.05;
 
     // We are using Speed geared motors
     // Set the encoder ticks per revolution
@@ -268,7 +268,7 @@ FwControlTask()
 
 #warning "stopFlywheel"
 void stopFlywheel () {
-	stopTask(FwControlTask);
+	stopTask(FWControlTask);
 	setFlywheel(0);
 }
 
@@ -285,10 +285,10 @@ task intakeControl () {
 
 		//Shooting control
 		if (vexRT(Btn6U) || intakeAutonomousShoot) {
-			if(true) {//(currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
+			if(time1[T1]>300) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
+				wait1Msec(85);
 				clearTimer(T1);
 			}
 			else {
@@ -342,6 +342,11 @@ task reverseFlywheel () {
 	}
 }
 
+void startFlywheel (int velocity, float predicted) {
+	startTask(FwControlTask);
+	FwVelocitySet( &flywheel, velocity, predicted );
+}
+
 #warning "init"
 void init() {
 	playTone(700,10);
@@ -360,13 +365,8 @@ void init() {
 	intakeAutonomousIntake = false;
 	intakeAutonomousIndexer = false;
 
-	flywheelShots();
-
-	startTask(intakeControl, kHighPriority);
+	startTask(intakeControl);
 	startTask(reverseFlywheel);
-
-	startTask(FwControlTask);
-	FwVelocitySet( &flywheel, 0, 0 );
 }
 
 void pre_auton() {
@@ -391,32 +391,24 @@ task autonomous() {
 task usercontrol() {
 
 
-	//init();
+	init();
 
 	while (true) {
-		motor[flywheel1] = 55;
-		motor[flywheel2] = 55;
-		motor[flywheel3] = 55;
-		motor[flywheel4] = 55;
-				if(vexRT(Btn6U)){
-			motor[intake] = 100;
-			motor[indexer] = 100;
-		}
 
 		if(!debugDrivebaseActive)
 			logDrive();
 
 		if(vexRT(Btn8U)){
-			FwVelocitySet( &flywheel, 50, 0.2 );
+			startFlywheel(50, 0.0 );
 			while(vexRT(Btn8U)) { delay(10); }
 		}
 		else if(vexRT(Btn8R)) {
-			FwVelocitySet( &flywheel, 120, 0.38 );
+			startFlywheel( 370, 0.0 );
 			while(vexRT(Btn8R)) { delay(10); }
 		}
 
 		else if(vexRT(Btn8L)) {
-			FwVelocitySet( &flywheel, 144, 0.55 );
+			startFlywheel( 420, 0.0 );
 			while(vexRT(Btn8L)) { delay(10); }
 		}
 

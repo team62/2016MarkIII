@@ -52,14 +52,14 @@ flywheelShot longShot, midShot, pipeShot, holdShot;
 flywheelShot currentShot;
 
 void flywheelShots() {
-	longShot.velocity = 5500;
+	longShot.velocity = 5300;
 	longShot.highSpeed = 100;
-	longShot.lowSpeed = 45;
+	longShot.lowSpeed = 55;
 	longShot.ramp = 0;
 	longShot.wait = 250; //prevents double shooting
-	longShot.kP = 0.05;
+	longShot.kP = 0.0001;
 	longShot.velocityShot = true;
-	longShot.velocityThreshold = 35;
+	longShot.velocityThreshold = 30;
 
 	midShot.velocity = 4330;
 	midShot.highSpeed = 100;
@@ -129,8 +129,7 @@ void setFlywheel ( int speed ) {
 //Logarithmic drivebase control
 #warning "logDrive"
 void logDrive () {
-	setWheelSpeed(
-	abs(vexRT(Ch3))*vexRT(Ch3)/127,
+	setWheelSpeed(abs(vexRT(Ch3))*vexRT(Ch3)/127,
 	(abs(vexRT(Ch2))*vexRT(Ch2)/127)>100?100:abs(vexRT(Ch2))*vexRT(Ch2)/127);
 }
 
@@ -282,11 +281,11 @@ task intakeControl () {
 			if((currentShot.velocityShot?abs(currentShot.velocity-flywheelVelocity)<currentShot.velocityThreshold:true) && flywheelVelocity>intakeShootVelocityThreshold && time1[T1]>currentShot.wait) {
 				writeDebugStreamLine("%d", flywheelVelocity);
 				motor[indexer] = 127;
-				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(25); }
+				while(SensorValue[indexHigh] && (vexRT(Btn6U)||intakeAutonomousShoot)) { delay(5); }
 				clearTimer(T1);
 			}
 			else {
-				motor[indexer] = (SensorValue[indexHigh])?0:127;
+				motor[indexer] = (SensorValue[indexHigh])?0:60;
 			}
 		}
 
@@ -296,7 +295,7 @@ task intakeControl () {
 
 		//Stop ball if ball is at a sensor
 		else if(SensorValue[indexLow]<intakeLightThreshold && !SensorValue[indexHigh]) {
-			motor[indexer] = 70;
+			motor[indexer] = 60;
 			clearTimer(T2);
 			while(time1[T2] < intakeMoveUpTime && !SensorValue[indexHigh]) { delay(20); }
 			motor[indexer] = 0;
@@ -315,7 +314,7 @@ task reverseFlywheel () {
 			stopFlywheel();
 			clearLCDLine(1);
 			while(flywheelVelocity>0) {
-				setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.3));
+				setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.2));
 				clearLCDLine(0);
 				displayLCDNumber(0,0,flywheelVelocity);
 				displayLCDNumber(0,10,motor[flywheel1]);
