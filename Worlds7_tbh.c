@@ -363,8 +363,10 @@ void init() {
 	flywheelShots();
 
 	startTask(intakeControl, kHighPriority);
-	startTask( FwControlTask );
 	startTask(reverseFlywheel);
+
+	startTask(FwControlTask);
+	FwVelocitySet( &flywheel, 0, 0 );
 }
 
 void pre_auton() {
