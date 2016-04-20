@@ -404,13 +404,10 @@ task usercontrol() {
 		if(!debugDrivebaseActive)
 			logDrive();
 
-		//if(vexRT(Btn8U)){
-
-	//}
-		//FwVelocitySet( &flywheel, 50, 0.2 );
-		//	while(vexRT(Btn8U)) { delay(10); }
-		//}
-/*
+		if(vexRT(Btn8U)){
+			FwVelocitySet( &flywheel, 50, 0.2 );
+			while(vexRT(Btn8U)) { delay(10); }
+		}
 		else if(vexRT(Btn8R)) {
 			FwVelocitySet( &flywheel, 120, 0.38 );
 			while(vexRT(Btn8R)) { delay(10); }
@@ -427,5 +424,5 @@ task usercontrol() {
 
 		else if(vexRT(Btn8D))
 			stopFlywheel();
-	*/}
+	}
 }
