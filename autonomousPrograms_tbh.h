@@ -3,7 +3,7 @@ void resetEncoders() {
 	nMotorEncoder(rightWheel13) = 0;
 }
 
-int autonomous2 = midShot-10;
+int autonomous2 = flywheelMidShot-10;
 
 void autonomousInit() {
 	//failsafe - ensure robot is properly initialsied
