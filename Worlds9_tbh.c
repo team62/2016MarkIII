@@ -344,7 +344,7 @@ task reverseFlywheel () {
 			stopFlywheel();
 			clearLCDLine(1);
 			while(flywheelVelocity>0) {
-				//setFlywheel(flywheelVelocity>flywheelSlowDownVelocity?0:-pow(abs((flywheelVelocity/1000)-flywheelSlowDownVelocity/1000),1.3));
+				setFlywheel(flywheelVelocity<200?-pow(abs(x/40-5),1.5):0;
 				clearLCDLine(0);
 				displayLCDNumber(0,0,flywheelVelocity);
 				displayLCDNumber(0,10,motor[flywheel1]);
